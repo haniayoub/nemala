@@ -6,6 +6,7 @@
 #include <string.h>
 #include "Serial.h"
 
+// Change these settings
 // Settings for the code
 #define COMPORT "COM5"
 
