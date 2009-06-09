@@ -16,7 +16,12 @@ typedef union Param
 	Direction direction;
 } Param;
 
-typedef enum {GET_PARAMETER_EXCEPTION, WAIT_FOR_V_EXCEPTION, GET_ENCODER_EXCEPTION, PORT_NOT_AVAILABLE_EXCEPTION} NemalaException;
+typedef enum {	
+	GET_PARAMETER_EXCEPTION, 
+	WAIT_FOR_V_EXCEPTION, 
+	GET_ENCODER_EXCEPTION, 
+	PORT_NOT_AVAILABLE_EXCEPTION
+} NemalaException;
 
 class Nemala
 {
@@ -31,9 +36,14 @@ public:
 	Speed		getMinSpeed();
 	Speed		getDriftSpeed();
 	Direction	getDriftDirection();
-	void		terminate();
 	int			getLeftEncoder();
 	int			getRightEncoder();
+	void		setMaxSpeed(Speed speed);
+	void		setMinSpeed(Speed speed);
+	void		setDriftSpeed(Speed speed);
+	void		setDriftDirection(Direction direction);
+	void		zeroEncoders();
+	void		terminate();
 	virtual	~Nemala();
 private:
 	CSerial cs;
@@ -43,7 +53,6 @@ private:
 	void	_waitforv();
 	Param	_getparameter();
 	int		_getencoder();
-	void	_resetencoders();
 	void	_connect();
 	void	_disconnect();
 };
