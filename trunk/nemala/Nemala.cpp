@@ -6,11 +6,14 @@
 #include <string.h>
 #include "Serial.h"
 
-// Change these settings
-// Settings for the code
+// Usings
+using namespace std;
+
+// Settings
 #define COMPORT "COM5"
 
-using namespace std;
+// MACROs
+#define CHECK_SUM(x) ((x)%256)
 
 enum { EOF_Char = 27 };
 
@@ -120,11 +123,11 @@ void _dataprepare(char a, char b, char c, char towrite[4]) {
 	towrite[0]=a;
 	towrite[1]=b;
 	towrite[2]=c;
-	towrite[3]=(a+b+c)%256;
+	towrite[3]=CHECK_SUM(a+b+c);
 }
 
 bool _verifybuffer(char buff[4]) {
-	return ((unsigned int)buff[3] == ((unsigned int)(buff[0]+buff[1]+buff[2])%256));
+	return ((unsigned int)buff[3] == ((unsigned int)CHECK_SUM(buff[0]+buff[1]+buff[2])));
 }
 
 DWORD _readfrombuff(CSerial* serial, char* szBuffer, size_t size, size_t min=0) {
