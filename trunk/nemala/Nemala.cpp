@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string.h>
-#include "Serial.h"
+#include "..\CSerial\Serial.h"
 
 // Usings
 using namespace std;
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 		bool fContinue = true;
 
 		//Switch to release mode
-		_waitforinit(&serial);
+		//_waitforinit(&serial);
 		while (fContinue) {
 			bool status;
 			bool gstatus;
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 			switch (whattodo) {
 				   case -1: _dataprepare(0x7E, 0x00, 0x00, towrite);
 					   serial.Write(towrite, 4*sizeof(char));
-					   _waitforinit(&serial);
+					   //_waitforinit(&serial);
 					   break;
 				   case 1: _dataprepare(0x44, 0x01, 0x30, towrite);
 					   serial.Write(towrite, 4*sizeof(char));
@@ -139,29 +139,11 @@ DWORD _readfrombuff(CSerial* serial, char* szBuffer, size_t size, size_t min=0) 
 	do {
 		LONG    lLastError = serial->Read(&szBuffer[dwBytesRead],size-dwBytesRead,&dwLocalBytesRead);
 		dwBytesRead+=dwLocalBytesRead;
-		if (dwLocalBytesRead == 0) {
-			i++;
-		} else {
-			i=0;
-		}
 		if (lLastError != ERROR_SUCCESS) {
 			return -1;
 		}
 	} while ((dwBytesRead<min));
-	/*
-	if (dwBytesRead > 0)
-	{
-	// Finalize the data, so it is a valid string
-	//szBuffer[dwBytesRead] = '\0';
-	//bool validbuf = _verifybuffer(szBuffer);
-	// Display the data
-	//if (validbuf) {
-	//szBuffer[4]='\0';
-	//printf("%s\n", szBuffer);
-	//}
 
-	}
-	*/
 	return dwBytesRead;
 }
 void _switchtoreleasemode(CSerial* serial) {
@@ -209,15 +191,14 @@ bool _waitforv(CSerial* serial) {
 		char szBuffer[5];
 		do {
 			szRead=_readfrombuff(serial,szBuffer, 4, 4);
-			if (_verifybuffer(szBuffer)) {
-				if (szBuffer[0]=='v') {
-					while (_readfrombuff(serial,tempbuf, 100)); //empty the buffer after the v
-					return true;
-				}
+			while (_readfrombuff(serial,tempbuf, 100)); //empty the buffer after the v
+			if ((_verifybuffer(szBuffer)) && (szBuffer[0]=='v')) {
+				return true;
+			} else {
+				return false;
 			}
 		} while (szRead>0);
 	}
-	return false;
 }
 
 bool _waitforinit(CSerial* serial) {
