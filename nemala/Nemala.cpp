@@ -5,11 +5,12 @@
 #define COMPORT "COM4"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
+#define DEFAULT_SPEED 30
 
 Nemala::Nemala()
 {
 	_connect();
-	_resetencoders();
+	zeroEncoders();
 }
 
 Nemala::~Nemala()
@@ -20,14 +21,14 @@ Nemala::~Nemala()
 void Nemala::driveForward()
 {
 	char towrite[BUFF_SIZE];
-	_dataprepare(0x44, 0x01, 0x30, towrite);
+	_dataprepare(0x44, 0x01, 0x30 /*replace with DEFAULT_SPEED*/, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
 void Nemala::driveBackward()
 {
 	char towrite[BUFF_SIZE];
-	_dataprepare(0x44, 0x00, 0x30, towrite);
+	_dataprepare(0x44, 0x00, 0x30 /*replace with DEFAULT_SPEED*/, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
@@ -100,6 +101,34 @@ int Nemala::getRightEncoder()
 	return _getencoder();
 }
 
+void Nemala::setMaxSpeed(Speed speed)
+{
+	char towrite[BUFF_SIZE];
+	_dataprepare(0x53, 0x00, (char)speed, towrite);
+	cs.Write(towrite, 4*sizeof(char));
+	_waitforv();
+}
+void Nemala::setMinSpeed(Speed speed)
+{
+	char towrite[BUFF_SIZE];
+	_dataprepare(0x53, 0x01, (char)speed, towrite);
+	cs.Write(towrite, 4*sizeof(char));
+	_waitforv();
+}
+void Nemala::setDriftSpeed(Speed speed)
+{
+	char towrite[BUFF_SIZE];
+	_dataprepare(0x53, 0x02, (char)speed, towrite);
+	cs.Write(towrite, 4*sizeof(char));
+	_waitforv();
+}
+void Nemala::setDriftDirection(Direction direction)
+{
+	char towrite[BUFF_SIZE];
+	_dataprepare(0x53, 0x00, (char)direction, towrite);
+	cs.Write(towrite, 4*sizeof(char));
+	_waitforv();
+}
 void Nemala::terminate()
 {
 	char towrite[BUFF_SIZE];
@@ -172,7 +201,7 @@ int Nemala::_getencoder() {
 	}
 }
 
-void Nemala::_resetencoders()
+void Nemala::zeroEncoders()
 {
 	char towrite[BUFF_SIZE];
 	_dataprepare(0x30, 0x00, 0x00, towrite);
@@ -223,3 +252,4 @@ void Nemala::_disconnect()
 {
 	cs.Close();
 }
+
