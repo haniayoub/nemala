@@ -13,16 +13,14 @@ using namespace std;
 #define COMPORT "COM5"
 
 // MACROs
-#define CHECK_SUM(x) ((x)%256)
+#define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 
 enum { EOF_Char = 27 };
 
 void _dataprepare(char a, char b, char c, char towrite[4]);
 bool _verifybuffer(char buff[4]);
-DWORD _readfrombuff(CSerial* serial, char* szBuffer, size_t size, size_t min);
-void _switchtoreleasemode(CSerial* serial);
+DWORD _readfrombuff(CSerial* serial, char* szBuffer, size_t size, bool blocking = true);
 bool _waitforv(CSerial* serial);
-bool _waitforinit(CSerial* serial);
 bool _getparameter(CSerial* serial, int* param);
 
 int main(int argc, char *argv[])
@@ -35,17 +33,8 @@ int main(int argc, char *argv[])
 	int whattodo;
 	if (lLastError == ERROR_SUCCESS) {
 		cout << COMPORT << " Port available, and connected successfully" << endl;
-		serial.SetMask(CSerial::EEventBreak |
-			CSerial::EEventCTS   |
-			CSerial::EEventDSR   |
-			CSerial::EEventError |
-			CSerial::EEventRing  |
-			CSerial::EEventRLSD  |
-			CSerial::EEventRecv);
 		bool fContinue = true;
 
-		//Switch to release mode
-		//_waitforinit(&serial);
 		while (fContinue) {
 			bool status;
 			bool gstatus;
@@ -66,7 +55,7 @@ int main(int argc, char *argv[])
 			switch (whattodo) {
 				   case -1: _dataprepare(0x7E, 0x00, 0x00, towrite);
 					   serial.Write(towrite, 4*sizeof(char));
-					   //_waitforinit(&serial);
+					   fContinue=false;
 					   break;
 				   case 1: _dataprepare(0x44, 0x01, 0x30, towrite);
 					   serial.Write(towrite, 4*sizeof(char));
@@ -123,134 +112,52 @@ void _dataprepare(char a, char b, char c, char towrite[4]) {
 	towrite[0]=a;
 	towrite[1]=b;
 	towrite[2]=c;
-	towrite[3]=CHECK_SUM(a+b+c);
+	towrite[3]=CHECK_SUM(a,b,c);
 }
 
 bool _verifybuffer(char buff[4]) {
-	return ((unsigned int)buff[3] == ((unsigned int)CHECK_SUM(buff[0]+buff[1]+buff[2])));
+	return (buff[3] == (CHECK_SUM(buff[0],buff[1],buff[2])));
 }
 
-DWORD _readfrombuff(CSerial* serial, char* szBuffer, size_t size, size_t min=0) {
+DWORD _readfrombuff(CSerial* serial, char* szBuffer, size_t size, bool blocking) {
 	// Read data, until there is nothing left with minimum number of bytes
 	DWORD dwBytesRead = 0;
-	DWORD dwLocalBytesRead = 0;
-	int i=0;
+	if (blocking) {
+		serial->SetupReadTimeouts(CSerial::EReadTimeoutBlocking);
+	} else {
+		serial->SetupReadTimeouts(CSerial::EReadTimeoutNonblocking);
+	}
 	// Read data from the COM-port
-	do {
-		LONG    lLastError = serial->Read(&szBuffer[dwBytesRead],size-dwBytesRead,&dwLocalBytesRead);
-		dwBytesRead+=dwLocalBytesRead;
-		if (lLastError != ERROR_SUCCESS) {
-			return -1;
-		}
-	} while ((dwBytesRead<min));
+	LONG    lLastError = serial->Read(szBuffer,size,&dwBytesRead);
+	if (lLastError != ERROR_SUCCESS) {
+		return -1;
+	}
 
 	return dwBytesRead;
 }
-void _switchtoreleasemode(CSerial* serial) {
-	bool release = false;
-	CSerial::EEvent eEvent;
-	char towrite[4];
-	char tempbuff[101];
-	do {
-		_readfrombuff(serial,tempbuff, 100); // clear the com port buffer
-		DWORD szWrite=0;
-		_dataprepare(0x4D, 0x00, 0x00, towrite);
-		do {
-			DWORD szLocalWrite;
-			serial->Write(&towrite[szWrite], 4-szWrite, &szLocalWrite);
-			szWrite+=szLocalWrite;
-		} while (szWrite < 4);
-		serial->WaitEvent();
-		eEvent = serial->GetEventType();
-		//cout << eEvent << endl;
-		// Handle data receive event
-		if (eEvent & CSerial::EEventRecv) {
-			DWORD szRead=0;
-			char szBuffer[5];
-			szRead=_readfrombuff(serial,szBuffer, 4, 4);
-			if (_verifybuffer(szBuffer)) {
-				if (szBuffer[0] == 'v') {
-					cout << "Robot now in Release mode!" << endl;
-					release = true;
-				}
-			}
-		}
-	} while (!release);
-}
 
 bool _waitforv(CSerial* serial) {
-	char tempbuf[100];
-	CSerial::EEvent eEvent;
-	serial->WaitEvent();
-	eEvent = serial->GetEventType();
-	//cout << eEvent << endl;
-	// Handle data receive event
-	if (eEvent & CSerial::EEventRecv)
-	{
-		DWORD szRead=0;
-		char szBuffer[5];
-		do {
-			szRead=_readfrombuff(serial,szBuffer, 4, 4);
-			while (_readfrombuff(serial,tempbuf, 100)); //empty the buffer after the v
-			if ((_verifybuffer(szBuffer)) && (szBuffer[0]=='v')) {
-				return true;
-			} else {
-				return false;
-			}
-		} while (szRead>0);
+	DWORD szRead=0;
+	char szBuffer[5];
+	szRead=_readfrombuff(serial,szBuffer, 4);
+	if ((_verifybuffer(szBuffer)) && (szBuffer[0]=='v')) {
+		return true;
+	} else {
+		return false;
 	}
-}
-
-bool _waitforinit(CSerial* serial) {
-	CSerial::EEvent eEvent;
-	bool release=false;
-	char towrite[5];
-
-	_dataprepare(0x20, 0x00, 0x00, towrite);
-	serial->Write(towrite, 4*sizeof(char));
-
-	serial->WaitEvent();
-	eEvent = serial->GetEventType();
-	//cout << eEvent << endl;
-	// Handle data receive event
-	if (eEvent & CSerial::EEventRecv)
-	{
-		DWORD szRead=0;
-		char szBuffer[101];
-		do {
-			szRead=_readfrombuff(serial,szBuffer, 100);
-			if (!release) {
-				cout << "Looks like the system initiated, reloading in release mode" << endl;
-				_switchtoreleasemode(serial);
-				release=true;
-			}
-		} while (szRead>0);
-	}
-	return true;
+	return false;
 }
 
 bool _getparameter(CSerial* serial, int* param) {
-	CSerial::EEvent eEvent;
 	bool release=false;
-
-	serial->WaitEvent();
-	eEvent = serial->GetEventType();
-	//cout << eEvent << endl;
-	// Handle data receive event
-	if (eEvent & CSerial::EEventRecv)
-	{
-		DWORD szRead=0;
-		char szBuffer[101];
-		char tempbuf[101];
-		do {
-			szRead=_readfrombuff(serial,szBuffer, 4, 4);
-			cout << _verifybuffer(szBuffer) << endl;
-			if (1+_verifybuffer(szBuffer) && (szBuffer[0]=='g')) {
-				*param=(unsigned int)szBuffer[2];
-				while (_readfrombuff(serial,tempbuf, 100)); //empty the buffer after the data we got
-				return true;
-			}
-		} while (szRead>0);
+	DWORD szRead=0;
+	char szBuffer[101];
+	szRead=_readfrombuff(serial,szBuffer, 4);
+	if (_verifybuffer(szBuffer) && (szBuffer[0]=='g')) {
+		*param=(unsigned int)szBuffer[2];
+		return true;
+	} else {
+		return false;
 	}
 	return false;
 }
