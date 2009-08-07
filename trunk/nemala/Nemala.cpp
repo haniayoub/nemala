@@ -2,7 +2,7 @@
 
 // defines
 #define STRICT
-#define COMPORT "COM4"
+#define COMPORT "COM2"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define DEFAULT_SPEED 30
@@ -25,6 +25,16 @@ void Nemala::driveForward()
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
+
+Distance Nemala::readSonar(int sonarNr)
+{
+	char towrite[BUFF_SIZE];
+	_dataprepare(0x52, sonarNr, 0x00, towrite);
+	cs.Write(towrite, 4*sizeof(char));
+	Distance dist = _getdistance();
+	return dist;
+}
+
 void Nemala::driveBackward()
 {
 	char towrite[BUFF_SIZE];
@@ -125,7 +135,11 @@ void Nemala::setDriftSpeed(Speed speed)
 void Nemala::setDriftDirection(Direction direction)
 {
 	char towrite[BUFF_SIZE];
-	_dataprepare(0x53, 0x00, (char)direction, towrite);
+	if (direction == LEFT) {
+		_dataprepare(0x53, 0x03, (char)0, towrite);
+	} else {
+		_dataprepare(0x53, 0x03, (char)1, towrite);
+	}
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
@@ -175,6 +189,8 @@ void Nemala::_waitforv() {
 	}
 }
 
+
+
 Param Nemala::_getparameter(){
 	bool release=false;
 	DWORD szRead=0;
@@ -200,7 +216,16 @@ int Nemala::_getencoder() {
 		throw GET_ENCODER_EXCEPTION;
 	}
 }
-
+int Nemala::_getdistance() {
+	DWORD szRead=0;
+	char szBuffer[101];
+	szRead=_readfrombuff(szBuffer, 4);
+	if (_verifybuffer(szBuffer) && (szBuffer[0]=='r')) {
+		return (int)((((int)szBuffer[2] << 8) & 0xFF00) + ((int)szBuffer[1] & 0xFF)) & 0xFFFF;
+	} else {
+		throw GET_ENCODER_EXCEPTION;
+	}
+}
 void Nemala::zeroEncoders()
 {
 	char towrite[BUFF_SIZE];
