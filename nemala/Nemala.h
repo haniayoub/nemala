@@ -9,6 +9,7 @@
 using namespace std;
 
 typedef int Speed;
+typedef int Distance;
 typedef enum {LEFT=0, RIGHT=1} Direction;
 typedef union Param
 {
@@ -38,6 +39,7 @@ public:
 	Direction	getDriftDirection();
 	int			getLeftEncoder();
 	int			getRightEncoder();
+	Distance		readSonar(int sonarNr);
 	void		setMaxSpeed(Speed speed);
 	void		setMinSpeed(Speed speed);
 	void		setDriftSpeed(Speed speed);
@@ -53,6 +55,7 @@ private:
 	void	_waitforv();
 	Param	_getparameter();
 	int		_getencoder();
+	Distance		_getdistance();
 	void	_connect();
 	void	_disconnect();
 };
