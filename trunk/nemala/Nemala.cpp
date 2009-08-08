@@ -52,7 +52,7 @@ void Nemala::turnLeft()
 void Nemala::turnRight()
 {
 	char towrite[BUFF_SIZE];
-	_dataprepare(0x54, 0x01, 0x09, towrite);
+	_dataprepare(0x54, 0x01, 0x20, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
