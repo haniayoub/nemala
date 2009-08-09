@@ -6,6 +6,15 @@
 #include <conio.h>
 #include "..\CSerial\Serial.h"
 
+#define CALIB_DIV 1.1578
+#define CALIB_TOL 0
+#define CALIB_ERRTIMES 2999
+#define CALIB_DRIFTLIMIT 20
+#define MM_PER_ENC_TICK 1.7640573318632855567805953693495
+#define MM_PER_360_DEG 200
+#define TICKS_PER_360_DEG 316
+#define TURN_TOLERANCE 0
+
 using namespace std;
 
 typedef int Speed;
@@ -28,17 +37,18 @@ class Nemala
 {
 public:
 	Nemala();
-	void		driveForward();
+	void		driveForwardCommand();
+	void		driveForward(Distance howlong=100);
 	void		driveBackward();
-	void		turnLeft();
-	void		turnRight();
+	void		turnLeft(Speed speed=0x20);
+	void		turnRight(Speed speed=0x20);
 	void		stop();
 	Speed		getMaxSpeed();
 	Speed		getMinSpeed();
 	Speed		getDriftSpeed();
 	Direction	getDriftDirection();
-	int			getLeftEncoder();
-	int			getRightEncoder();
+	short			getLeftEncoder();
+	short			getRightEncoder();
 	Distance		readSonar(int sonarNr);
 	void		setMaxSpeed(Speed speed);
 	void		setMinSpeed(Speed speed);
@@ -54,7 +64,7 @@ private:
 	DWORD	_readfrombuff(char* szBuffer, size_t size, bool blocking = true);
 	void	_waitforv();
 	Param	_getparameter();
-	int		_getencoder();
+	short		_getencoder();
 	Distance		_getdistance();
 	void	_connect();
 	void	_disconnect();
