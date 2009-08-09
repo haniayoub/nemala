@@ -154,14 +154,16 @@ int main(int argc, char *argv[])
 						   cout << "Joystick mode" << endl;
 						   break;
 					   case 101:
-						   nemala.driveForward(1000);
+						   nemala.calibrate();
+						   cout << nemala.glob_calib_avg << endl;
+						   cout << nemala.glob_calib_dir << endl;
 						   break;
 					   case 100:
-							//nemala.driveForward(640);
-							//nemala.turnRight(0.25);
-							nemala.driveForward(2540);
-							nemala.turnLeft(0.25);
-							nemala.driveForward(1160);
+							nemala.driveForward(630);
+							nemala.turnRight(0.245);
+							nemala.driveForward(2530);
+							nemala.turnLeft(0.245);
+							nemala.driveForward(1150);
 						   break;
 				}
 			}

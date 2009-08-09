@@ -5,6 +5,7 @@
 #include <string.h>
 #include <conio.h>
 #include "..\CSerial\Serial.h"
+#include "Map.h"
 
 #define CALIB_DIV 1.1578
 #define CALIB_TOL 0
@@ -45,6 +46,7 @@ public:
 	void		turnRightCommand(Speed speed=0x20);
 	void		turnRight(float turn_amount_angle=0.25);
 	void		stop();
+	void		calibrate();
 	Speed		getMaxSpeed();
 	Speed		getMinSpeed();
 	Speed		getDriftSpeed();
@@ -59,8 +61,11 @@ public:
 	void		zeroEncoders();
 	void		terminate();
 	virtual	~Nemala();
+	int glob_calib_avg;
+	int glob_calib_dir;
 private:
 	CSerial cs;
+	Map *map;
 	void	_dataprepare(char a, char b, char c, char towrite[4]);
 	bool	_verifybuffer(char buff[4]);
 	DWORD	_readfrombuff(char* szBuffer, size_t size, bool blocking = true);
