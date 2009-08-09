@@ -40,8 +40,10 @@ public:
 	void		driveForwardCommand();
 	void		driveForward(Distance howlong=100);
 	void		driveBackward();
-	void		turnLeft(Speed speed=0x20);
-	void		turnRight(Speed speed=0x20);
+	void		turnLeftCommand(Speed speed=0x20);
+	void		turnLeft(float turn_amount_angle=0.25);
+	void		turnRightCommand(Speed speed=0x20);
+	void		turnRight(float turn_amount_angle=0.25);
 	void		stop();
 	Speed		getMaxSpeed();
 	Speed		getMinSpeed();

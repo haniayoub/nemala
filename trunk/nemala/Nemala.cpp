@@ -99,19 +99,129 @@ void Nemala::driveBackward()
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
-void Nemala::turnLeft(Speed speed)
+void Nemala::turnLeftCommand(Speed speed)
 {
 	char towrite[BUFF_SIZE];
 	_dataprepare(0x54, 0x00, speed, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
-void Nemala::turnRight(Speed speed)
+void Nemala::turnRightCommand(Speed speed)
 {
 	char towrite[BUFF_SIZE];
 	_dataprepare(0x54, 0x01, speed, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
+}
+void Nemala::turnRight(float turn_amount_angle)
+{
+	short left, right;
+	int drift;
+	int glob_r_enc, glob_l_enc;
+	int turn_amount;
+	//int turn_speed;
+	//turn_speed = 0x00;
+	turn_amount=turn_amount_angle*TICKS_PER_360_DEG;
+	right=left=0;
+	zeroEncoders();
+	glob_r_enc=0;
+	glob_l_enc=0;
+	//nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+	while (1) {
+		left = getLeftEncoder()+glob_l_enc;
+		right = getRightEncoder()+glob_r_enc;
+		glob_r_enc=right;
+		glob_l_enc=left;
+		if ((left+right) < turn_amount-TURN_TOLERANCE) {
+			setDriftSpeed(CALIB_DRIFTLIMIT/2);
+			setDriftDirection(RIGHT);
+			//nemala.setDriftSpeed(0);
+			zeroEncoders();
+			turnRightCommand(0x20);
+			stop();
+		} else if ((left+right) > turn_amount+TURN_TOLERANCE) {
+			while ((left+right) > turn_amount+TURN_TOLERANCE) {
+				setDriftSpeed(CALIB_DRIFTLIMIT/2);
+				setDriftDirection(RIGHT);
+				zeroEncoders();
+				turnLeftCommand(0x02);
+				stop();
+				left = glob_l_enc-getLeftEncoder();
+				right = glob_r_enc-getRightEncoder();
+				glob_r_enc=right;
+				glob_l_enc=left;
+				cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+			}
+			setDriftSpeed(0);
+			stop();
+			return;
+		} else {
+			setDriftSpeed(0);
+			stop();
+			cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+			return;
+		}
+		cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+	}
+	//cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+	setDriftSpeed(0);
+	stop();
+	return;
+}
+void Nemala::turnLeft(float turn_amount_angle)
+{
+	short left, right;
+	int drift;
+	int glob_r_enc, glob_l_enc;
+	int turn_amount;
+	//int turn_speed;
+	//turn_speed = 0x00;
+	turn_amount=turn_amount_angle*TICKS_PER_360_DEG;
+	right=left=0;
+	zeroEncoders();
+	glob_r_enc=0;
+	glob_l_enc=0;
+	//nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+	while (1) {
+		left = getLeftEncoder()+glob_l_enc;
+		right = getRightEncoder()+glob_r_enc;
+		glob_r_enc=right;
+		glob_l_enc=left;
+		if ((left+right) < turn_amount-TURN_TOLERANCE) {
+			setDriftSpeed(CALIB_DRIFTLIMIT/2);
+			setDriftDirection(RIGHT);
+			//nemala.setDriftSpeed(0);
+			zeroEncoders();
+			turnLeftCommand(0x20);
+			stop();
+		} else if ((left+right) > turn_amount+TURN_TOLERANCE) {
+			while ((left+right) > turn_amount+TURN_TOLERANCE) {
+				setDriftSpeed(CALIB_DRIFTLIMIT/2);
+				setDriftDirection(RIGHT);
+				zeroEncoders();
+				turnRightCommand(0x02);
+				stop();
+				left = glob_l_enc-getLeftEncoder();
+				right = glob_r_enc-getRightEncoder();
+				glob_r_enc=right;
+				glob_l_enc=left;
+				cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+			}
+			setDriftSpeed(0);
+			stop();
+			return;
+		} else {
+			setDriftSpeed(0);
+			stop();
+			cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+			return;
+		}
+		cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+	}
+	//cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+	setDriftSpeed(0);
+	stop();
+	return;
 }
 void Nemala::stop()
 {
