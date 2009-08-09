@@ -11,6 +11,7 @@ Nemala::Nemala()
 {
 	_connect();
 	zeroEncoders();
+	map = new Map();
 }
 
 Nemala::~Nemala()
@@ -25,7 +26,77 @@ void Nemala::driveForwardCommand()
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
+void Nemala::calibrate()
+{
+	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
+	int glob_calib_fix;
+	int glob_r_enc, glob_l_enc;
+	Distance howlong=1500;
+	int avg_glob_calib=0;
+	int iterations=0;
+	glob_r_enc=0;
+	glob_l_enc=0;
+	err_count=0;
+	glob_calib_fix=getDriftSpeed()*CALIB_DIV;
+	zeroEncoders();
+	while(1) {
+		short left, right;
+		iterations++;
+		driveForwardCommand();
+	    left = getLeftEncoder();
+	    right = getRightEncoder();
+		glob_r_enc=right;
+		glob_l_enc=left;
+		//left+=glob_calib_fix;
+		glob_calib_fix=left-right;
+		//nemala.zeroEncoders();
+	    if (left > right+CALIB_TOL) {
+			err_count+=1;
+			if (err_count > CALIB_ERRTIMES) {
+				left -= glob_calib_fix;
+				err_count=0;
+			}
+			if ((left-right)/CALIB_DIV > CALIB_DRIFTLIMIT) {
+				setDriftSpeed(CALIB_DRIFTLIMIT);
+				avg_glob_calib+=CALIB_DRIFTLIMIT;
+			} else {
+				setDriftSpeed((left-right)/CALIB_DIV);
+				avg_glob_calib+=(left-right)/CALIB_DIV;
+			}
+			setDriftDirection(RIGHT);
+	    } else if (right > left+CALIB_TOL) {
+			err_count-=1;
+			if (err_count < -CALIB_ERRTIMES) {
+				left += glob_calib_fix;
+				err_count=0;
+			}
 
+			if ((right-left)/CALIB_DIV > CALIB_DRIFTLIMIT) {
+				setDriftSpeed(CALIB_DRIFTLIMIT);
+				avg_glob_calib-=CALIB_DRIFTLIMIT;
+			} else {
+				setDriftSpeed((right-left)/CALIB_DIV);
+				avg_glob_calib-=(right-left)/CALIB_DIV;
+			}
+			setDriftDirection(LEFT);
+		} else {
+			setDriftSpeed(0);
+			setDriftDirection(LEFT);
+		}
+		cout << "Left: " << glob_r_enc << " Right: " << glob_l_enc << " Diff: " << left-right << " and: " << glob_l_enc-glob_r_enc << endl;
+		if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
+			stop();
+			if (avg_glob_calib > 0) {
+				glob_calib_avg=avg_glob_calib/iterations;
+				glob_calib_dir=RIGHT;
+			} else {
+				glob_calib_avg=-avg_glob_calib/iterations;
+				glob_calib_dir=LEFT;
+			}
+			return;
+		}
+	}
+}
 void Nemala::driveForward(Distance howlong)
 {
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
@@ -34,7 +105,8 @@ void Nemala::driveForward(Distance howlong)
 	glob_r_enc=0;
 	glob_l_enc=0;
 	err_count=0;
-	glob_calib_fix=getDriftSpeed()*CALIB_DIV;
+	glob_calib_fix=glob_calib_avg*CALIB_DIV;
+	setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 	zeroEncoders();
 	while(1) {
 		short left, right;
