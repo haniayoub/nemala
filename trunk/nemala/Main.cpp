@@ -1,5 +1,5 @@
 #include "Nemala.h"
-
+#include <windows.h>
 
 #define CALIB_DIV 1.1578
 #define CALIB_TOL 0
@@ -7,8 +7,8 @@
 #define CALIB_DRIFTLIMIT 20
 #define MM_PER_ENC_TICK 1.7640573318632855567805953693495
 #define MM_PER_360_DEG 200
-#define MAX_ENC 65532
-#define TICKS_PER_360_DEG 222.23376623376623376623376623377
+#define TICKS_PER_360_DEG 316
+#define TURN_TOLERANCE 0
 
 typedef enum {REGULAR, Joystick} NemalaMode;
 int main(int argc, char *argv[])
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 							glob_calib_fix=nemala.getDriftSpeed()*CALIB_DIV;
 							nemala.zeroEncoders();
 							while(1) {
-								int left, right;
+								short left, right;
 								nemala.driveForward();
 							    left = nemala.getLeftEncoder();
 							    right = nemala.getRightEncoder();
@@ -171,52 +171,122 @@ int main(int argc, char *argv[])
 							}
 						   break;
 						case 81:
-							int left, right;
+							short left, right;
 							int drift;
 							int turn_amount;
-							turn_amount=0.5*TICKS_PER_360_DEG;
+							//int turn_speed;
+							//turn_speed = 0x00;
+							turn_amount=0.25*TICKS_PER_360_DEG;
 							right=left=0;
 							nemala.zeroEncoders();
-							left = nemala.getLeftEncoder();
-							right = nemala.getRightEncoder();
-							nemala.turnRight();
+							glob_r_enc=0;
+							glob_l_enc=0;
+							//nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
 							while (1) {
-								if ((right != 0) && ((left-(right-MAX_ENC)) < turn_amount)) {
-									left = nemala.getLeftEncoder();
-									right = nemala.getRightEncoder();
-									if (left+right-MAX_ENC != 0) {
-										drift=nemala.getDriftSpeed()-(left+right-MAX_ENC)/CALIB_DIV;
-										if (drift > CALIB_DRIFTLIMIT) {
-											//nemala.setDriftSpeed(CALIB_DRIFTLIMIT);
-										} else if (drift < -CALIB_DRIFTLIMIT) {
-											//nemala.setDriftSpeed(-CALIB_DRIFTLIMIT);
-										} else {
-											//nemala.setDriftSpeed(drift);
-										}
-									}
-								} else if ((right == 0) && (left<turn_amount)) {
-									left = nemala.getLeftEncoder();
-									right = nemala.getRightEncoder();
-									if (left+right-MAX_ENC != 0) {
-										drift=nemala.getDriftSpeed()-(left+right-MAX_ENC)/CALIB_DIV;
-										if (drift > CALIB_DRIFTLIMIT) {
-											//nemala.setDriftSpeed(CALIB_DRIFTLIMIT);
-										} else if (drift < -CALIB_DRIFTLIMIT) {
-											//nemala.setDriftSpeed(-CALIB_DRIFTLIMIT);
-										} else {
-											//nemala.setDriftSpeed(drift);
-										}
-									}
-								} else {
+								left = nemala.getLeftEncoder()+glob_l_enc;
+								right = nemala.getRightEncoder()+glob_r_enc;
+								glob_r_enc=right;
+								glob_l_enc=left;
+								if ((left+right) < turn_amount-TURN_TOLERANCE) {
+									nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+									nemala.setDriftDirection(RIGHT);
+									//nemala.setDriftSpeed(0);
+									nemala.zeroEncoders();
+									nemala.turnRight(0x20);
 									nemala.stop();
-									//cout << "Right: " << right-MAX_ENC << " Left: " << left << " Until: " << (MM_PER_360_DEG/4)/MM_PER_ENC_TICK << endl;
+								} else if ((left+right) > turn_amount+TURN_TOLERANCE) {
+									while ((left+right) > turn_amount+TURN_TOLERANCE) {
+										nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+										nemala.setDriftDirection(RIGHT);
+										nemala.zeroEncoders();
+										nemala.turnLeft(0x02);
+										nemala.stop();
+										left = glob_l_enc-nemala.getLeftEncoder();
+										right = glob_r_enc-nemala.getRightEncoder();
+										glob_r_enc=right;
+										glob_l_enc=left;
+										cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+									}
+									nemala.setDriftSpeed(0);
+									nemala.stop();
+									break;
+								} else {
+									nemala.setDriftSpeed(0);
+									nemala.stop();
+									cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 									break;
 								}
-								cout << "Right: " << right-MAX_ENC << " Left: " << left << " Until: " << (MM_PER_360_DEG/4)/MM_PER_ENC_TICK << endl;
+								cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 							}
-							cout << "Right: " << right-MAX_ENC << " Left: " << left << " Until: " << (MM_PER_360_DEG/4)/MM_PER_ENC_TICK << endl;
+							//cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+							nemala.setDriftSpeed(0);
 							nemala.stop();
 						   break;
+					    case 82:
+							//int turn_speed;
+							//turn_speed = 0x00;
+							turn_amount=0.25*TICKS_PER_360_DEG;
+							right=left=0;
+							nemala.zeroEncoders();
+							glob_r_enc=0;
+							glob_l_enc=0;
+							//nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+							while (1) {
+								left = nemala.getLeftEncoder()+glob_l_enc;
+								right = nemala.getRightEncoder()+glob_r_enc;
+								glob_r_enc=right;
+								glob_l_enc=left;
+								if ((left+right) < turn_amount-TURN_TOLERANCE) {
+									nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+									nemala.setDriftDirection(RIGHT);
+									//nemala.setDriftSpeed(0);
+									nemala.zeroEncoders();
+									nemala.turnLeft(0x20);
+									nemala.stop();
+								} else if ((left+right) > turn_amount+TURN_TOLERANCE) {
+									while ((left+right) > turn_amount+TURN_TOLERANCE) {
+										nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+										nemala.setDriftDirection(RIGHT);
+										nemala.zeroEncoders();
+										nemala.turnRight(0x02);
+										nemala.stop();
+										left = glob_l_enc-nemala.getLeftEncoder();
+										right = glob_r_enc-nemala.getRightEncoder();
+										glob_r_enc=right;
+										glob_l_enc=left;
+										cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+									}
+									nemala.setDriftSpeed(0);
+									nemala.stop();
+									break;
+								} else {
+									nemala.setDriftSpeed(0);
+									nemala.stop();
+									cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+									break;
+								}
+								cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+							}
+							nemala.setDriftSpeed(0);
+							//cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+							nemala.stop();
+						   break;
+						case 8000:
+							nemala.zeroEncoders();
+							while (1) {
+								nemala.turnLeft(0x20);
+								for (int i=0; i<100; i++) {
+									left = nemala.getLeftEncoder();
+									right = nemala.getRightEncoder();
+									cout << "Right: " << right << " Left: " << left << endl;
+								}
+								nemala.turnRight(0x20);
+								for (int i=0; i<100; i++) {
+									left = nemala.getLeftEncoder();
+									right = nemala.getRightEncoder();
+									cout << "Right: " << right << " Left: " << left << endl;
+								}
+							}
 					   case 9: 
 							nemala.setDriftSpeed(0);
 							nemala.setDriftDirection(LEFT);

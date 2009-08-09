@@ -2,7 +2,7 @@
 
 // defines
 #define STRICT
-#define COMPORT "COM2"
+#define COMPORT "COM1"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define DEFAULT_SPEED 30
@@ -18,12 +18,69 @@ Nemala::~Nemala()
 	_disconnect();
 }
 
-void Nemala::driveForward()
+void Nemala::driveForwardCommand()
 {
 	char towrite[BUFF_SIZE];
 	_dataprepare(0x44, 0x01, 0x30 /*replace with DEFAULT_SPEED*/, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
+}
+
+void Nemala::driveForward(Distance howlong)
+{
+	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
+	int glob_calib_fix;
+	int glob_r_enc, glob_l_enc;
+	glob_r_enc=0;
+	glob_l_enc=0;
+	err_count=0;
+	glob_calib_fix=getDriftSpeed()*CALIB_DIV;
+	zeroEncoders();
+	while(1) {
+		short left, right;
+		driveForwardCommand();
+	    left = getLeftEncoder();
+	    right = getRightEncoder();
+		glob_r_enc=right;
+		glob_l_enc=left;
+		//left+=glob_calib_fix;
+		glob_calib_fix=left-right;
+		//nemala.zeroEncoders();
+	    if (left > right+CALIB_TOL) {
+			err_count+=1;
+			if (err_count > CALIB_ERRTIMES) {
+				left -= glob_calib_fix;
+				err_count=0;
+			}
+			if ((left-right)/CALIB_DIV > CALIB_DRIFTLIMIT) {
+				setDriftSpeed(CALIB_DRIFTLIMIT);
+			} else {
+				setDriftSpeed((left-right)/CALIB_DIV);
+			}
+			setDriftDirection(RIGHT);
+	    } else if (right > left+CALIB_TOL) {
+			err_count-=1;
+			if (err_count < -CALIB_ERRTIMES) {
+				left += glob_calib_fix;
+				err_count=0;
+			}
+
+			if ((right-left)/CALIB_DIV > CALIB_DRIFTLIMIT) {
+				setDriftSpeed(CALIB_DRIFTLIMIT);
+			} else {
+				setDriftSpeed((right-left)/CALIB_DIV);
+			}
+			setDriftDirection(LEFT);
+		} else {
+			setDriftSpeed(0);
+			setDriftDirection(LEFT);
+		}
+		cout << "Left: " << glob_r_enc << " Right: " << glob_l_enc << " Diff: " << left-right << " and: " << glob_l_enc-glob_r_enc << endl;
+		if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
+			stop();
+			return;
+		}
+	}
 }
 
 Distance Nemala::readSonar(int sonarNr)
@@ -42,17 +99,17 @@ void Nemala::driveBackward()
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
-void Nemala::turnLeft()
+void Nemala::turnLeft(Speed speed)
 {
 	char towrite[BUFF_SIZE];
-	_dataprepare(0x54, 0x00, 0x20, towrite);
+	_dataprepare(0x54, 0x00, speed, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
-void Nemala::turnRight()
+void Nemala::turnRight(Speed speed)
 {
 	char towrite[BUFF_SIZE];
-	_dataprepare(0x54, 0x01, 0x09, towrite);
+	_dataprepare(0x54, 0x01, speed, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
@@ -96,14 +153,14 @@ Direction Nemala::getDriftDirection()
 	return p.direction;
 }
 
-int Nemala::getLeftEncoder()
+short Nemala::getLeftEncoder()
 {
 	char towrite[BUFF_SIZE];
 	_dataprepare(0x45, 0x00, 0x00, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	return _getencoder();
 }
-int Nemala::getRightEncoder()
+short Nemala::getRightEncoder()
 {
 	char towrite[BUFF_SIZE];
 	_dataprepare(0x45, 0x01, 0x00, towrite);
@@ -206,12 +263,12 @@ Param Nemala::_getparameter(){
 	}
 }
 
-int Nemala::_getencoder() {
+short Nemala::_getencoder() {
 	DWORD szRead=0;
 	char szBuffer[101];
 	szRead=_readfrombuff(szBuffer, 4);
 	if (_verifybuffer(szBuffer) && (szBuffer[0]=='e')) {
-		return (int)((((int)szBuffer[2] << 8) & 0xFF00) + ((int)szBuffer[1] & 0xFF)) & 0xFFFF;
+		return (short)((((short)szBuffer[2] << 8) & 0xFF00) + ((short)szBuffer[1] & 0xFF)) & 0xFFFF;
 	} else {
 		throw GET_ENCODER_EXCEPTION;
 	}
