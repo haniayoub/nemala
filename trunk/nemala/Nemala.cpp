@@ -1,11 +1,19 @@
 #include "Nemala.h"
 
 // defines
-#define STRICT
+//#define STRICT
 #define COMPORT "COM6"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define DEFAULT_SPEED 30
+#define SonarForCM 256
+#define SonarDFEpselon 2
+
+int getMid(int x, int y, int z) {
+	if (((x <= y) && (y<=z)) || ((x >= y) && (y>=z))) return y;
+	if (((y <= x) && (x<=z)) || ((y >= x) && (x>=z))) return x;
+	if (((x <= z) && (z<=y)) || ((x >= z) && (z>=y))) return z;
+}
 
 Nemala::Nemala()
 {
@@ -22,22 +30,23 @@ Nemala::~Nemala()
 void Nemala::driveForwardCommand()
 {
 	char towrite[BUFF_SIZE];
-	_dataprepare(0x44, 0x01, 0x30 /*replace with DEFAULT_SPEED*/, towrite);
+	_dataprepare(0x44, 0x01, 0x20 /*replace with DEFAULT_SPEED*/, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
 void Nemala::calibrate()
 {
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
-	int glob_calib_fix;
-	int glob_r_enc, glob_l_enc;
+	double glob_calib_fix;
+	double glob_r_enc, glob_l_enc;
 	Distance howlong=1500;
 	int avg_glob_calib=0;
 	int iterations=0;
+	glob_calib_avg=0;
 	glob_r_enc=0;
 	glob_l_enc=0;
 	err_count=0;
-	glob_calib_fix=getDriftSpeed()*CALIB_DIV;
+	glob_calib_fix=(getDriftSpeed()*CALIB_DIV);
 	zeroEncoders();
 	while(1) {
 		short left, right;
@@ -60,7 +69,7 @@ void Nemala::calibrate()
 				setDriftSpeed(CALIB_DRIFTLIMIT);
 				avg_glob_calib+=CALIB_DRIFTLIMIT;
 			} else {
-				setDriftSpeed((left-right)/CALIB_DIV);
+				setDriftSpeed((Speed)(left-right)/CALIB_DIV);
 				avg_glob_calib+=(left-right)/CALIB_DIV;
 			}
 			setDriftDirection(RIGHT);
@@ -97,17 +106,24 @@ void Nemala::calibrate()
 		}
 	}
 }
-void Nemala::driveForward(Distance howlong)
+void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_dist, Distance front_dist)
 {
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
 	int glob_calib_fix;
 	int glob_r_enc, glob_l_enc;
+	int actual_left_dist,actual_front_dist,actual_right_dist;
 	glob_r_enc=0;
 	glob_l_enc=0;
 	err_count=0;
 	glob_calib_fix=glob_calib_avg*CALIB_DIV;
 	setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 	zeroEncoders();
+	readSonar(0);readSonar(0);readSonar(0);
+	readSonar(4);readSonar(4);readSonar(4);
+	int sonarcounter=0;
+	actual_left_dist=left_dist;
+	actual_front_dist=front_dist;
+	actual_right_dist=right_dist;
 	while(1) {
 		short left, right;
 		driveForwardCommand();
@@ -115,8 +131,35 @@ void Nemala::driveForward(Distance howlong)
 	    right = getRightEncoder();
 		glob_r_enc=right;
 		glob_l_enc=left;
+		if ((glob_r_enc + glob_r_enc)/2 > sonarcounter*250/MM_PER_ENC_TICK) {
+			actual_left_dist=left_dist;
+			actual_front_dist=front_dist;
+			actual_right_dist=right_dist;
+			if (left_dist > -1) {
+				actual_left_dist=getMid(readSonar(0),readSonar(0),readSonar(0));
+				if (abs(left_dist-actual_left_dist) <= SonarDFEpselon) {
+					actual_left_dist=left_dist;
+				}
+			}
+			if (right_dist > -1) {
+				actual_right_dist=getMid(readSonar(4),readSonar(4),readSonar(4));
+				if (abs(right_dist-actual_right_dist) <= SonarDFEpselon) {
+					actual_right_dist=right_dist;
+				}
+			}
+			if (front_dist > -1) {
+				actual_front_dist=readSonar(2);
+				if (abs(front_dist-actual_front_dist) <= SonarDFEpselon) {
+					actual_front_dist=front_dist;
+				}
+			}
+			sonarcounter++;
+			cout << "Left Err: " << actual_left_dist << " Right Err: " << actual_right_dist << endl;
+		}
 		//left+=glob_calib_fix;
 		glob_calib_fix=left-right;
+		left+=2*(actual_left_dist-left_dist)/SonarDFEpselon;
+		right+=2*(actual_right_dist-right_dist)/SonarDFEpselon;
 		//nemala.zeroEncoders();
 	    if (left > right+CALIB_TOL) {
 			err_count+=1;
@@ -147,7 +190,7 @@ void Nemala::driveForward(Distance howlong)
 			setDriftSpeed(0);
 			setDriftDirection(LEFT);
 		}
-		cout << "Left: " << glob_r_enc << " Right: " << glob_l_enc << " Diff: " << left-right << " and: " << glob_l_enc-glob_r_enc << endl;
+		//cout << "Left: " << glob_r_enc << " Right: " << glob_l_enc << " Diff: " << left-right << " and: " << glob_l_enc-glob_r_enc << endl;
 		if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
 			stop();
 			return;
@@ -155,12 +198,14 @@ void Nemala::driveForward(Distance howlong)
 	}
 }
 
+// 0 - left
+// 4 - right
 Distance Nemala::readSonar(int sonarNr)
 {
 	char towrite[BUFF_SIZE];
 	_dataprepare(0x52, sonarNr, 0x00, towrite);
 	cs.Write(towrite, 4*sizeof(char));
-	Distance dist = _getdistance();
+	Distance dist = _getdistance()/SonarForCM;
 	return dist;
 }
 
@@ -188,7 +233,6 @@ void Nemala::turnRightCommand(Speed speed)
 void Nemala::turnRight(float turn_amount_angle)
 {
 	short left, right;
-	int drift;
 	int glob_r_enc, glob_l_enc;
 	int turn_amount;
 	//int turn_speed;
@@ -248,7 +292,7 @@ void Nemala::turnLeft(float turn_amount_angle)
 	int turn_amount;
 	//int turn_speed;
 	//turn_speed = 0x00;
-	turn_amount=turn_amount_angle*TICKS_PER_360_DEG;
+	turn_amount=(int)(turn_amount_angle*TICKS_PER_360_DEG);
 	right=left=0;
 	zeroEncoders();
 	glob_r_enc=0;
@@ -516,4 +560,3 @@ void Nemala::_disconnect()
 {
 	cs.Close();
 }
-
