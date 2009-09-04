@@ -5,7 +5,7 @@
 #include <string.h>
 #include <conio.h>
 #include "..\CSerial\Serial.h"
-#include "Map.h"
+#include "..\map\Map.h"
 
 #define CALIB_DIV 1.1578
 #define CALIB_TOL 0
@@ -38,6 +38,7 @@ class Nemala
 {
 public:
 	Nemala();
+	Map			*map;
 	void		driveForwardCommand();
 	void		driveForward(Distance howlong=100);
 	void		driveBackward();
@@ -51,28 +52,28 @@ public:
 	Speed		getMinSpeed();
 	Speed		getDriftSpeed();
 	Direction	getDriftDirection();
-	short			getLeftEncoder();
-	short			getRightEncoder();
-	Distance		readSonar(int sonarNr);
+	short		getLeftEncoder();
+	short		getRightEncoder();
+	Distance	readSonar(int sonarNr);
 	void		setMaxSpeed(Speed speed);
 	void		setMinSpeed(Speed speed);
 	void		setDriftSpeed(Speed speed);
 	void		setDriftDirection(Direction direction);
 	void		zeroEncoders();
 	void		terminate();
-	virtual	~Nemala();
-	int glob_calib_avg;
-	int glob_calib_dir;
+	int			glob_calib_avg;
+	int			glob_calib_dir;
+	virtual		~Nemala();
+
 private:
 	CSerial cs;
-	Map *map;
 	void	_dataprepare(char a, char b, char c, char towrite[4]);
 	bool	_verifybuffer(char buff[4]);
 	DWORD	_readfrombuff(char* szBuffer, size_t size, bool blocking = true);
 	void	_waitforv();
 	Param	_getparameter();
-	short		_getencoder();
-	Distance		_getdistance();
+	short	_getencoder();
+	Distance _getdistance();
 	void	_connect();
 	void	_disconnect();
 };

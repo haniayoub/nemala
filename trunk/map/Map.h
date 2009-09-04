@@ -34,15 +34,159 @@ using namespace std;
 #define OBS_4_Y 185
 
 typedef enum {NOT_BOUND, LEFT_BOUND, RIGHT_BOUND, TOP_BOUND, BUTTOM_BOUND, BASE_ANGLE} Bound;
+typedef enum {NORTH /*0*/, SOUTH /*1*/, EAST /*2*/, WEST /*3*/} Orientation;
 
 class Map {
 public:
+	Map()
+	{
+		init();
+		findAngles();
+		decomposite();
+		setStations();
+	}
+
+	bool getNextStation(int &x, int &y)
+	{
+		currStation++;
+		for(int i(0); i<MAP_WIDTH; i++)
+			for(int j(0); j<MAP_HIGHT; j++)
+				if(stations[i][j] == currStation)
+				{
+					x=i;
+					y=j;
+					return true;
+				}
+		x=-1;
+		y=-1;
+		return false;
+	}
+
+	int getCurrStation()
+	{
+		return currStation;
+	}
+
+	int getDistance(int x, int y)
+	{
+		int minX = min(MAP_WIDTH-x, x);
+		int minY = min(MAP_HIGHT-y, y);
+
+		for(int i(0); i<MAP_WIDTH; i++)
+			if(m[i][y] == -1)
+				minX = min(minX, abs(x-i));
+
+		for(int j(0); j<MAP_HIGHT; j++)
+			if(m[x][j] == -1)
+				minY = min(minY, abs(y-j));
+		
+		return min(minX, minY);
+	}
+
+	void getDistances(int x, int y, Orientation o,
+					  int &northDist, int &southDist,
+					  int &eastDist , int &westDist)
+	{
+		/*
+		 ---------------------------
+		|							|
+		|							|
+		|			S(2)			|
+		|							|
+		|	  E(3)		  W(4)		|
+		|							|
+		|			N(1)			|
+		|							|
+		|							|
+		 ---------------------------
+		*/
+		int dist1=MAP_HIGHT-1, dist2=MAP_HIGHT-1, dist3=MAP_WIDTH-1, dist4=MAP_WIDTH-1;
+		
+		for(int j(y); j<MAP_HIGHT; j++)
+			if(m[x][j] == -1)
+				dist1 = min(dist1, j-y); /*North*/
+
+		for(int j(0); j<y; j++)
+			if(m[x][j] == -1)
+				dist2 = min(dist2, y-j); /*South*/
+
+		for(int i(0); i<x; i++)
+			if(m[i][y] == -1)
+				dist3 = min(dist3, x-i); /*East*/
+
+		for(int i(x); i<MAP_WIDTH; i++)
+			if(m[i][y] == -1)
+				dist4 = min(dist4, i-x); /*West*/
+		
+		if(o == NORTH)
+		{
+			northDist = dist1;
+			southDist = dist2;
+			eastDist  = dist3;
+			westDist  = dist4;
+		}
+		else if(o == WEST)
+		{
+			northDist = dist4;
+			southDist = dist3;
+			eastDist  = dist1;
+			westDist  = dist2;
+		}
+		else if(o == SOUTH)
+		{
+			northDist = dist2;
+			southDist = dist1;
+			eastDist  = dist4;
+			westDist  = dist3;
+		}
+		else if(o == EAST)
+		{
+			northDist = dist3;
+			southDist = dist4;
+			eastDist  = dist2;
+			westDist  = dist1;
+		}
+		else
+		{
+			throw "Bad Orientation.";
+		}
+	}
+
+	void getIntersectionPoints(int x  , int y, 
+							   int &x1, int &y1, 
+							   int &x2, int &y2)
+	{
+		
+	}
+
+	void print()
+	{
+		printMatrix(m);
+	}
+
+	void printAngles()
+	{
+		printMatrix(angles);
+	}
+
+	void printStations()
+	{
+		printMatrix(stations);
+	}
+
+	virtual ~Map(){};
+
+private:
 	int m[MAP_WIDTH][MAP_HIGHT];
 	int angles[MAP_WIDTH][MAP_HIGHT];
 	int changing[MAP_HIGHT];
 	int stations[MAP_WIDTH][MAP_HIGHT];
-	Map()
+	int currStation;
+	int src;
+
+	void init()
 	{
+		currStation = 0;
 		for(int i(0); i<MAP_WIDTH; i++)
 			for(int j(0); j<MAP_HIGHT; j++)
 			{
@@ -74,21 +218,20 @@ public:
 
 	void setStations()
 	{	
-		decomposite();
 		int currStation(1), j;
 		stations[SRC_X][SRC_Y] = currStation++;
-		cout << "station: " << SRC_X << " " << SRC_Y << endl;
+		//cout << "station: " << SRC_X << " " << SRC_Y << endl;
 		for(int i(0); i<MAP_HIGHT; i++)
 		{
 			if(changing[i] == 1)
 			{
 				j = getNextStation(i);
 				stations[j][i] = currStation++;
-				cout << "station: " << j << " " << i << endl;
+				//cout << "station: " << j << " " << i << endl;
 			}
 		}
 		stations[TGT_X][TGT_Y] = currStation++;
-		cout << "station: " << TGT_X << " " << TGT_Y << endl;
+		//cout << "station: " << TGT_X << " " << TGT_Y << endl;
 	}
 
 	int getNextStation(int i)
@@ -116,7 +259,6 @@ public:
 	void decomposite()
 	{
 		int cellNum(1);
-		findAngles();
 		for(int i(0); i<MAP_HIGHT; i++)
 		{
 			if( (!isAngleInRow(i)) || (!isAngleInRow(i-1)) )
@@ -150,28 +292,10 @@ public:
 			for(int j(0); j<MAP_HIGHT; j++)
 				if(isAngle(i,j))
 				{
-					//cout << "point: " << i << " " << j << " is Angle!" << endl;
 					angles[i][j] = 1;
 				}
 	}
 
-	void print()
-	{
-		printMatrix(m);
-	}
-
-	void printAngles()
-	{
-		printMatrix(angles);
-	}
-
-	void printStations()
-	{
-		printMatrix(stations);
-	}
-
-	virtual ~Map(){};
-private:
 	bool isAngle(int x, int y)
 	{
 		int zeros = 0, ones = 0;
