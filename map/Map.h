@@ -8,6 +8,19 @@ using namespace std;
 
 #define MAX_ANGLES 1000
 
+/*
+---------------------------
+|							|
+|	(1)				  (2)	|
+|							|
+|							|
+|							|
+|							|
+|							|
+|	(3)				  (4)	|
+|							|
+---------------------------
+*/
 #define POINT_1_X 30
 #define POINT_1_Y 30
 #define POINT_2_X 210
@@ -16,12 +29,6 @@ using namespace std;
 #define POINT_3_Y 285
 #define POINT_4_X 210
 #define POINT_4_Y 285
-
-//Source and Target points
-#define SRC_X POINT_1_X
-#define SRC_Y POINT_1_Y
-#define TGT_X POINT_4_X
-#define TGT_Y POINT_4_Y
 
 //Obstacles' positions
 #define OBS_1_X 0
@@ -38,8 +45,12 @@ typedef enum {NORTH /*0*/, SOUTH /*1*/, EAST /*2*/, WEST /*3*/} Orientation;
 
 class Map {
 public:
-	Map()
+	Map(int src_x, int src_y, int tgt_x, int tgt_y)
 	{
+		this->src_x = src_x;
+		this->src_y = src_y;
+		this->tgt_x = tgt_x;
+		this->tgt_y = tgt_y;
 		init();
 		findAngles();
 		decomposite();
@@ -174,6 +185,11 @@ public:
 		printMatrix(stations);
 	}
 
+	int src_x;
+	int src_y;
+	int tgt_x;
+	int tgt_y;
+
 	virtual ~Map(){};
 
 private:
@@ -196,8 +212,8 @@ private:
 				changing[j] = 0;
 			}
 
-		m[SRC_X][SRC_Y] = 'S';
-		m[TGT_X][TGT_Y] = 'T';
+		m[src_x][src_y] = 'S';
+		m[tgt_x][tgt_y] = 'T';
 
 		for(int i(0); i<OBSTACLE_WIDTH; i++)
 			for(int j(0); j<OBSTACLE_HIGHT; j++)
@@ -219,8 +235,8 @@ private:
 	void setStations()
 	{	
 		int currStation(1), j;
-		stations[SRC_X][SRC_Y] = currStation++;
-		//cout << "station: " << SRC_X << " " << SRC_Y << endl;
+		stations[src_x][src_y] = currStation++;
+		//cout << "station: " << src_x << " " << src_y << endl;
 		for(int i(0); i<MAP_HIGHT; i++)
 		{
 			if(changing[i] == 1)
@@ -230,7 +246,7 @@ private:
 				//cout << "station: " << j << " " << i << endl;
 			}
 		}
-		stations[TGT_X][TGT_Y] = currStation++;
+		stations[tgt_x][tgt_y] = currStation++;
 		//cout << "station: " << TGT_X << " " << TGT_Y << endl;
 	}
 

@@ -15,11 +15,12 @@ int getMid(int x, int y, int z) {
 	if (((x <= z) && (z<=y)) || ((x >= z) && (z>=y))) return z;
 }
 
-Nemala::Nemala()
+Nemala::Nemala(Map *map, Orientation o)
 {
 	_connect();
 	zeroEncoders();
-	map = new Map();
+	this->map = map;
+	this->curr_o = o;
 }
 
 Nemala::~Nemala()
@@ -108,6 +109,7 @@ void Nemala::calibrate()
 }
 void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_dist, Distance front_dist)
 {
+	cout << "Driving forward" << howlong << "MM";
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
 	int glob_calib_fix;
 	int glob_r_enc, glob_l_enc;
@@ -232,6 +234,7 @@ void Nemala::turnRightCommand(Speed speed)
 }
 void Nemala::turnRight(float turn_amount_angle)
 {
+	cout << "Turning right" << turn_amount_angle << "circle";
 	short left, right;
 	int glob_r_enc, glob_l_enc;
 	int turn_amount;
@@ -286,6 +289,7 @@ void Nemala::turnRight(float turn_amount_angle)
 }
 void Nemala::turnLeft(float turn_amount_angle)
 {
+	cout << "Turning left" << turn_amount_angle << "circle";
 	short left, right;
 	int drift;
 	int glob_r_enc, glob_l_enc;
@@ -559,4 +563,51 @@ void Nemala::_connect()
 void Nemala::_disconnect()
 {
 	cs.Close();
+}
+void Nemala::fineTune()
+{	
+	/*TODO: implement*/
+}
+
+void Nemala::changeOrientation(Orientation o)
+{
+	if(curr_o == o) return;
+
+	if(curr_o == NORTH && o == WEST ) turnLeft (0.25);
+	if(curr_o == NORTH && o == SOUTH) turnLeft (0.5);
+	if(curr_o == NORTH && o == EAST ) turnRight(0.25);
+
+	if(curr_o == WEST  && o == SOUTH) turnLeft (0.25);
+	if(curr_o == WEST  && o == EAST ) turnLeft (0.5);
+	if(curr_o == WEST  && o == NORTH) turnRight(0.25);
+
+	if(curr_o == SOUTH && o == EAST ) turnLeft (0.25);
+	if(curr_o == SOUTH && o == NORTH) turnLeft (0.5);
+	if(curr_o == SOUTH && o == WEST ) turnRight(0.25);
+
+	if(curr_o == EAST  && o == NORTH) turnLeft (0.25);
+	if(curr_o == EAST  && o == WEST ) turnLeft (0.5);
+	if(curr_o == EAST  && o == SOUTH) turnRight(0.25);
+
+	curr_o = o;
+}
+
+void Nemala::driveXaxis(int xFrom, int xTo)
+{	
+	//cout << "driveXaxis from " << xFrom << "to " << xTo;
+	int dist = abs(xFrom-xTo);
+
+	if(xFrom < xTo) changeOrientation(EAST);
+	else			changeOrientation(WEST);
+	driveForward(dist*10);
+}
+
+void Nemala::driveYaxis(int yFrom, int yTo)
+{	
+	//cout << "driveYaxis from " << yFrom << "to " << yTo;
+	int dist = abs(yFrom-yTo);
+
+	if(yFrom < yTo) changeOrientation(SOUTH);
+	else			changeOrientation(NORTH);
+	driveForward(dist*10);
 }

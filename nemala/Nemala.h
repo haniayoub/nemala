@@ -37,7 +37,7 @@ typedef enum {
 class Nemala
 {
 public:
-	Nemala();
+	Nemala(Map *map, Orientation o);
 	Map			*map;
 	void		driveForwardCommand();
 	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
@@ -61,8 +61,13 @@ public:
 	void		setDriftDirection(Direction direction);
 	void		zeroEncoders();
 	void		terminate();
+	void		fineTune();
+	void		driveXaxis(int yFrom, int yTo);
+	void		driveYaxis(int xFrom, int xTo);
+	void		changeOrientation(Orientation o);
 	int			glob_calib_avg;
 	int			glob_calib_dir;
+	Orientation curr_o;
 	virtual		~Nemala();
 
 private:
