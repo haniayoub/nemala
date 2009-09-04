@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
 			{
 				bool status;
 				bool gstatus;
+				Distance right_distance, left_distance, front_distance;
 				cout << "What do you want to do?" << endl;
 				cout << "1. Drive forward" << endl;
 				cout << "2. Drive Backward" << endl;
@@ -97,7 +98,7 @@ int main(int argc, char *argv[])
 						   cout << "RightEncoder: " << param << endl;;
 						   break;
 						case 70: 
-							while(1) {
+							for (int i=0; i<100; i++) {
 						   param = nemala.readSonar(0);
 						   cout << "Sonar: " << param << endl;;
 							}
@@ -109,7 +110,7 @@ int main(int argc, char *argv[])
 							}
 						   break;
 						   case 74: 
-							while(1) {
+							for (int i=0; i<100; i++) {
 						   param = nemala.readSonar(4);
 						   cout << "Sonar: " << param << endl;;
 							}
@@ -164,11 +165,28 @@ int main(int argc, char *argv[])
 						   cout << nemala.glob_calib_dir << endl;
 						   break;
 					   case 100:
-							nemala.driveForward(630);
-							nemala.turnRight(0.245);
-							nemala.driveForward(2530);
-							nemala.turnLeft(0.245);
-							nemala.driveForward(1150);
+						   right_distance=nemala.readSonar(4);
+							left_distance = nemala.readSonar(0);
+							front_distance = nemala.readSonar(2);
+						   while (!(((right_distance <= 35) && (right_distance >= 25)) && ((left_distance <= 105) && (left_distance >= 95)))) {
+							   nemala.turnLeft();
+							right_distance=nemala.readSonar(4);
+							left_distance = nemala.readSonar(0);
+							front_distance = nemala.readSonar(2);
+							cout << "Right: " << right_distance << " Left: " << left_distance << " Front: " << front_distance << endl;
+							}
+						   break;
+						case 1000:
+						   //nemala.driveForward(800);
+						   //nemala.turnLeft(0.25);
+						   //nemala.driveForward(2550);
+						   //nemala.turnLeft(0.25);
+						   //nemala.driveForward(800);
+							nemala.driveForward(540,30);
+							nemala.turnLeft(0.25);
+							nemala.driveForward(1100,-1,84);
+							nemala.driveForward(520,30, 30);
+							nemala.driveForward(520,30, 84);
 						   break;
 				}
 			}

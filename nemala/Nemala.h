@@ -40,7 +40,7 @@ public:
 	Nemala();
 	Map			*map;
 	void		driveForwardCommand();
-	void		driveForward(Distance howlong=100);
+	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveBackward();
 	void		turnLeftCommand(Speed speed=0x20);
 	void		turnLeft(float turn_amount_angle=0.25);
