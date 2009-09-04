@@ -2,7 +2,7 @@
 
 // defines
 #define STRICT
-#define COMPORT "COM1"
+#define COMPORT "COM6"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define DEFAULT_SPEED 30

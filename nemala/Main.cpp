@@ -10,7 +10,7 @@
 #define TICKS_PER_360_DEG 316
 #define TURN_TOLERANCE 0
 
-typedef enum {REGULAR, Joystick} NemalaMode;
+typedef enum {REGULAR, Joystick, Automatic} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 		int whattodo;
 		int param;
 		bool fContinue = true;
-		NemalaMode mode = REGULAR;
+		NemalaMode mode = Automatic;
 
 		while (fContinue) {
 			if(mode == REGULAR)
@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
 				cout << "9. Reset Drift" << endl;
 				cout << "-1. TERMINATE!" << endl;
 				cout << "99. Move to joystick mode" << endl;
+				cout << "98. Move to Automatic mode" << endl;
 				cout << "z. Return to normal mode" << endl;
 				cin >> whattodo;
 
@@ -149,6 +150,10 @@ int main(int argc, char *argv[])
 							nemala.setDriftDirection(LEFT);
 							nemala.driveForward();
 							break;
+					   case 98: 
+						   mode = Automatic;
+						   cout << "Automatic mode" << endl;
+						   break;
 					   case 99: 
 						   mode = Joystick;
 						   cout << "Joystick mode" << endl;
@@ -195,6 +200,46 @@ int main(int argc, char *argv[])
 				{
 					nemala.turnLeft();
 				}
+			}
+			else if(mode == Automatic)
+			{
+				int currX, currY, nextX, nextY;
+				int northDist, southDist, eastDist , westDist;
+				
+				//nemala.map->print();
+
+				nemala.map->getNextStation(currX, currY);
+				cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << currX << "," << currY << ")" << endl;
+
+				while(nemala.map->getNextStation(nextX, nextY))
+				{
+					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << endl;
+					if(currX == nextX)
+					{/* _ */
+
+					}
+					else if(currY == nextY)
+					{/* | */
+
+					}
+					else /* Choose path: (1) |_ (2) _| */
+					{
+						int distXaxis = nemala.map->getDistance(nextX, currY),
+							distYaxis = nemala.map->getDistance(currX, nextY);
+
+						if(distXaxis < distYaxis) /* |_ */
+						{
+
+						}
+						else if(distYaxis < distXaxis) /* _| */
+						{
+
+						}
+					}
+					currX = nextX;
+					currY = nextY;
+				}
+				return 0;
 			}
 		}
 	}
