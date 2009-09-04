@@ -14,7 +14,7 @@ typedef enum {REGULAR, Joystick, Automatic} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
-		Nemala nemala;
+		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_4_X, POINT_4_Y), NORTH);
 		int whattodo;
 		int param;
 		bool fContinue = true;
@@ -221,10 +221,9 @@ int main(int argc, char *argv[])
 			}
 			else if(mode == Automatic)
 			{
+				nemala.fineTune();
 				int currX, currY, nextX, nextY;
 				int northDist, southDist, eastDist , westDist;
-				
-				//nemala.map->print();
 
 				nemala.map->getNextStation(currX, currY);
 				cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << currX << "," << currY << ")" << endl;
@@ -233,25 +232,27 @@ int main(int argc, char *argv[])
 				{
 					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << endl;
 					if(currX == nextX)
-					{/* _ */
-
+					{ /* | */
+						nemala.driveYaxis(currY, nextY);
 					}
 					else if(currY == nextY)
-					{/* | */
-
+					{ /* - */
+						nemala.driveYaxis(currY, nextY);
 					}
 					else /* Choose path: (1) |_ (2) _| */
 					{
 						int distXaxis = nemala.map->getDistance(nextX, currY),
 							distYaxis = nemala.map->getDistance(currX, nextY);
 
-						if(distXaxis < distYaxis) /* |_ */
+						if(distXaxis < distYaxis) /* _| */
 						{
-
+							nemala.driveXaxis(currX, nextX);
+							nemala.driveYaxis(currY, nextY);
 						}
-						else if(distYaxis < distXaxis) /* _| */
+						else if(distYaxis < distXaxis) /* |_ */
 						{
-
+							nemala.driveYaxis(currY, nextY);
+							nemala.driveXaxis(currX, nextX);							
 						}
 					}
 					currX = nextX;
