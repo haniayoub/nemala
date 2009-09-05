@@ -2,6 +2,7 @@
 
 // defines
 //#define STRICT
+//#define DEBUG
 #define COMPORT "COM6"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
@@ -17,8 +18,10 @@ int getMid(int x, int y, int z) {
 
 Nemala::Nemala(Map *map, Orientation o)
 {
+#ifndef DEBUG
 	_connect();
 	zeroEncoders();
+#endif
 	this->map = map;
 	this->curr_o = o;
 }
@@ -93,7 +96,7 @@ void Nemala::calibrate()
 			setDriftSpeed(0);
 			setDriftDirection(LEFT);
 		}
-		cout << "Left: " << glob_r_enc << " Right: " << glob_l_enc << " Diff: " << left-right << " and: " << glob_l_enc-glob_r_enc << endl;
+		//cout << "Left: " << glob_r_enc << " Right: " << glob_l_enc << " Diff: " << left-right << " and: " << glob_l_enc-glob_r_enc << endl;
 		if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
 			stop();
 			if (avg_glob_calib > 0) {
@@ -109,7 +112,8 @@ void Nemala::calibrate()
 }
 void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_dist, Distance front_dist)
 {
-	cout << "Driving forward" << howlong << "MM";
+	cout << "  Driving forward " << howlong << " mm" << endl;
+#ifndef DEBUG
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
 	int glob_calib_fix;
 	int glob_r_enc, glob_l_enc;
@@ -198,6 +202,7 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 			return;
 		}
 	}
+#endif
 }
 
 // 0 - left
@@ -234,7 +239,8 @@ void Nemala::turnRightCommand(Speed speed)
 }
 void Nemala::turnRight(float turn_amount_angle)
 {
-	cout << "Turning right" << turn_amount_angle << "circle";
+	cout << "  Turning right   " << turn_amount_angle << " circle" << endl;
+#ifndef DEBUG
 	short left, right;
 	int glob_r_enc, glob_l_enc;
 	int turn_amount;
@@ -286,10 +292,12 @@ void Nemala::turnRight(float turn_amount_angle)
 	setDriftSpeed(0);
 	stop();
 	return;
+#endif
 }
 void Nemala::turnLeft(float turn_amount_angle)
 {
-	cout << "Turning left" << turn_amount_angle << "circle";
+	cout << "  Turning left    " << turn_amount_angle << " circle" << endl;
+#ifndef DEBUG
 	short left, right;
 	int drift;
 	int glob_r_enc, glob_l_enc;
@@ -342,6 +350,7 @@ void Nemala::turnLeft(float turn_amount_angle)
 	setDriftSpeed(0);
 	stop();
 	return;
+#endif
 }
 void Nemala::stop()
 {
@@ -597,8 +606,8 @@ void Nemala::driveXaxis(int xFrom, int xTo)
 	//cout << "driveXaxis from " << xFrom << "to " << xTo;
 	int dist = abs(xFrom-xTo);
 
-	if(xFrom < xTo) changeOrientation(EAST);
-	else			changeOrientation(WEST);
+	if(xFrom < xTo) changeOrientation(WEST);
+	else			changeOrientation(EAST);
 	driveForward(dist*10);
 }
 
@@ -607,7 +616,7 @@ void Nemala::driveYaxis(int yFrom, int yTo)
 	//cout << "driveYaxis from " << yFrom << "to " << yTo;
 	int dist = abs(yFrom-yTo);
 
-	if(yFrom < yTo) changeOrientation(SOUTH);
-	else			changeOrientation(NORTH);
+	if(yFrom < yTo) changeOrientation(NORTH);
+	else			changeOrientation(SOUTH);
 	driveForward(dist*10);
 }
