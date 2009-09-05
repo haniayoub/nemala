@@ -179,6 +179,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\map\Map.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Nemala.cpp"
 				>
 			</File>
