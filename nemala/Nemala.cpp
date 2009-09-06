@@ -3,12 +3,15 @@
 // defines
 //#define STRICT
 //#define DEBUG
-#define COMPORT "COM6"
+#define COMPORT "COM1"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define DEFAULT_SPEED 30
 #define SonarForCM 256
-#define SonarDFEpselon 2
+#define SonarDFEpselon 3
+#define MM_BETWEEN_SONAR_READS 120
+#define SONAR_MARGIN_IN_CM 10
+#define MAX_SONAR_DRIFT_FIX 0
 
 int getMid(int x, int y, int z) {
 	if (((x <= y) && (y<=z)) || ((x >= y) && (y>=z))) return y;
@@ -24,6 +27,8 @@ Nemala::Nemala(Map *map, Orientation o)
 #endif
 	this->map = map;
 	this->curr_o = o;
+	currentx=map->src_x;
+	currenty=map->src_y;
 }
 
 Nemala::~Nemala()
@@ -31,10 +36,10 @@ Nemala::~Nemala()
 	_disconnect();
 }
 
-void Nemala::driveForwardCommand()
+void Nemala::driveForwardCommand(Speed s)
 {
 	char towrite[BUFF_SIZE];
-	_dataprepare(0x44, 0x01, 0x20 /*replace with DEFAULT_SPEED*/, towrite);
+	_dataprepare(0x44, 0x01, s /*replace with DEFAULT_SPEED*/, towrite);
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
@@ -110,45 +115,90 @@ void Nemala::calibrate()
 		}
 	}
 }
-void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_dist, Distance front_dist)
+void Nemala::driveForward(Distance howlong)
 {
 	cout << "  Driving forward " << howlong << " mm" << endl;
 #ifndef DEBUG
+	Distance right_dist, left_dist, front_dist, back_dist;
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
 	int glob_calib_fix;
 	int glob_r_enc, glob_l_enc;
 	int actual_left_dist,actual_front_dist,actual_right_dist;
+	int temp_x=currentx;
+	int	temp_y=currenty;
+	int sonarleftfix,sonarrightfix;
 	glob_r_enc=0;
 	glob_l_enc=0;
 	err_count=0;
 	glob_calib_fix=glob_calib_avg*CALIB_DIV;
+	setDriftSpeed(glob_calib_fix);
 	setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 	zeroEncoders();
 	readSonar(0);readSonar(0);readSonar(0);
 	readSonar(4);readSonar(4);readSonar(4);
-	int sonarcounter=0;
+	int sonarcounter=1;
+	map->getDistances(temp_x, temp_y, curr_o, front_dist, back_dist, right_dist, left_dist);
+	if (left_dist < right_dist) {
+		right_dist=-1;
+	}
+	if (left_dist >= right_dist) {
+		left_dist=-1;
+	}
 	actual_left_dist=left_dist;
 	actual_front_dist=front_dist;
 	actual_right_dist=right_dist;
 	while(1) {
 		short left, right;
 		driveForwardCommand();
-	    left = getLeftEncoder();
-	    right = getRightEncoder();
+		left = getLeftEncoder();
+		right = getRightEncoder();
 		glob_r_enc=right;
 		glob_l_enc=left;
-		if ((glob_r_enc + glob_r_enc)/2 > sonarcounter*250/MM_PER_ENC_TICK) {
+		if ((glob_r_enc + glob_r_enc)/2 > sonarcounter*MM_BETWEEN_SONAR_READS/MM_PER_ENC_TICK) {
+			if (curr_o == NORTH) {
+				temp_y=currenty+sonarcounter*MM_BETWEEN_SONAR_READS/10;
+			}
+			if (curr_o == SOUTH) {
+				temp_y=currenty-sonarcounter*MM_BETWEEN_SONAR_READS/10;
+			}
+			if (curr_o == EAST) {
+				temp_x=currentx-sonarcounter*MM_BETWEEN_SONAR_READS/10;
+			}
+			if (curr_o == WEST) {
+				temp_x=currentx+sonarcounter*MM_BETWEEN_SONAR_READS/10;
+			}
+			bool condition = ((curr_o == NORTH) && (temp_y+SONAR_MARGIN_IN_CM < currenty+howlong/10));
+			condition = condition || ((curr_o == SOUTH) && (temp_y-SONAR_MARGIN_IN_CM > currenty-howlong/10));
+			condition = condition || ((curr_o == EAST) && (temp_x-SONAR_MARGIN_IN_CM > currentx-howlong/10));
+			condition = condition || ((curr_o == WEST) && (temp_x+SONAR_MARGIN_IN_CM < currentx+howlong/10));
+			if (condition) {
+				map->getDistances(temp_x, temp_y, curr_o, front_dist, back_dist, right_dist, left_dist);
+			} else {
+				left_dist=right_dist=-1;
+			}
+			//stop();
+			if (left_dist < right_dist) {
+				right_dist=-1;
+			} else {
+				left_dist=-1;
+			}
+//driveForwardCommand();
+			//left_dist=right_dist=-1;
 			actual_left_dist=left_dist;
 			actual_front_dist=front_dist;
 			actual_right_dist=right_dist;
+			//stop();
+			driveForwardCommand(0x05);
 			if (left_dist > -1) {
-				actual_left_dist=getMid(readSonar(0),readSonar(0),readSonar(0));
+				//actual_left_dist=getMid(readSonar(0),readSonar(0),readSonar(0));
+				actual_left_dist=readSonar(0);
 				if (abs(left_dist-actual_left_dist) <= SonarDFEpselon) {
 					actual_left_dist=left_dist;
 				}
 			}
 			if (right_dist > -1) {
-				actual_right_dist=getMid(readSonar(4),readSonar(4),readSonar(4));
+				//actual_right_dist=getMid(readSonar(4),readSonar(4),readSonar(4));
+				actual_right_dist=readSonar(4);
 				if (abs(right_dist-actual_right_dist) <= SonarDFEpselon) {
 					actual_right_dist=right_dist;
 				}
@@ -160,12 +210,37 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 				}
 			}
 			sonarcounter++;
-			cout << "Left Err: " << actual_left_dist << " Right Err: " << actual_right_dist << endl;
+			cout << "Left: " << actual_left_dist << " Right: " << actual_right_dist << " Left needed: " << left_dist << " Right needed: " << right_dist << endl;
+				sonarcounter=sonarcounter;
+				glob_calib_fix=glob_calib_avg*CALIB_DIV;
+	driveForwardCommand();
 		}
-		//left+=glob_calib_fix;
+		left+=(glob_calib_dir?glob_calib_avg*CALIB_DIV:-glob_calib_avg*CALIB_DIV);
 		glob_calib_fix=left-right;
-		left+=2*(actual_left_dist-left_dist)/SonarDFEpselon;
-		right+=2*(actual_right_dist-right_dist)/SonarDFEpselon;
+		
+		sonarleftfix = (actual_left_dist-left_dist)/SonarDFEpselon;
+		if ((sonarleftfix <= MAX_SONAR_DRIFT_FIX) && (sonarleftfix >= -MAX_SONAR_DRIFT_FIX)) {
+			left+=sonarleftfix;
+		} else {
+			if (sonarleftfix > 0) {
+				left+=MAX_SONAR_DRIFT_FIX;
+			} else {
+				left-=MAX_SONAR_DRIFT_FIX;
+			}
+			//sonarcounter--;
+		}
+		sonarrightfix = (actual_right_dist-right_dist)/SonarDFEpselon;
+		if ((sonarrightfix <= MAX_SONAR_DRIFT_FIX) && (sonarrightfix >= -MAX_SONAR_DRIFT_FIX)) {
+			right+=sonarrightfix;
+		} else {
+			if (sonarrightfix > 0) {
+				right+=MAX_SONAR_DRIFT_FIX;
+			} else {
+				right-=MAX_SONAR_DRIFT_FIX;
+			}
+			//sonarcounter--;
+		}
+		
 		//nemala.zeroEncoders();
 	    if (left > right+CALIB_TOL) {
 			err_count+=1;
@@ -199,6 +274,18 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 		//cout << "Left: " << glob_r_enc << " Right: " << glob_l_enc << " Diff: " << left-right << " and: " << glob_l_enc-glob_r_enc << endl;
 		if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
 			stop();
+			if (curr_o == NORTH) {
+				currenty+=howlong/10;
+			}
+			if (curr_o == SOUTH) {
+				currenty-=howlong/10;
+			}
+			if (curr_o == EAST) {
+				currentx-=howlong/10;
+			}
+			if (curr_o == WEST) {
+				currentx+=howlong/10;
+			}
 			return;
 		}
 	}

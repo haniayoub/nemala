@@ -12,7 +12,7 @@ using namespace std;
 /************************************************************************/
 /* Points definitions                                                   */
 /************************************************************************/
-#define POINT_1_X 30
+#define POINT_1_X 210
 #define POINT_1_Y 30
 #define POINT_2_X 210
 #define POINT_2_Y 30
@@ -67,6 +67,8 @@ public:
 	void	print();
 	void	printAngles();
 	void	printStations();
+	int src_x;
+	int src_y;
 
 private:
 	int m[MAP_WIDTH][MAP_HIGHT];
@@ -75,8 +77,6 @@ private:
 	int stations[MAP_WIDTH][MAP_HIGHT];
 	int currStation;
 
-	int src_x;
-	int src_y;
 	int tgt_x;
 	int tgt_y;
 
