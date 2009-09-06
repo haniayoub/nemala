@@ -39,8 +39,8 @@ class Nemala
 public:
 	Nemala(Map *map, Orientation o);
 	Map			*map;
-	void		driveForwardCommand();
-	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
+	void		driveForwardCommand(Speed s=0x24);
+	void		driveForward(Distance howlong=100);
 	void		driveBackward();
 	void		turnLeftCommand(Speed speed=0x20);
 	void		turnLeft(float turn_amount_angle=0.25);
@@ -67,7 +67,6 @@ public:
 	void		changeOrientation(Orientation o);
 	int			glob_calib_avg;
 	int			glob_calib_dir;
-	Orientation curr_o;
 	virtual		~Nemala();
 
 private:
@@ -81,4 +80,6 @@ private:
 	Distance _getdistance();
 	void	_connect();
 	void	_disconnect();
+	int currentx, currenty;
+	Orientation curr_o;
 };

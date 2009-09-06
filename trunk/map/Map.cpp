@@ -120,7 +120,7 @@ void Map::getDistances(int x, int y, Orientation o,
 	|							|
 	+---------------------------+
 	*/
-	int dist1=MAP_HIGHT-1, dist2=MAP_HIGHT-1, dist3=MAP_WIDTH-1, dist4=MAP_WIDTH-1;
+	int dist1=MAP_HIGHT-y, dist2=y, dist3=x, dist4=MAP_WIDTH-x;
 
 	for(int j(y); j<MAP_HIGHT; j++)
 		if(m[x][j] == -1)

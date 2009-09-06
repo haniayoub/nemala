@@ -17,11 +17,11 @@ typedef enum {REGULAR, Joystick, Automatic} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
-		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_4_X, POINT_4_Y), WEST);
+		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_4_X, POINT_4_Y), EAST);
 		int whattodo;
 		int param;
 		bool fContinue = true;
-		NemalaMode mode = Automatic;
+		NemalaMode mode = REGULAR;
 
 		while (fContinue) {
 			if(mode == Automatic)
@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
 					currY = nextY;
 					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << endl;
 				}
+				system("PAUSE");
 				return 0;
 			}			
 			else if(mode == REGULAR)
@@ -227,11 +228,11 @@ int main(int argc, char *argv[])
 						   //nemala.driveForward(2550);
 						   //nemala.turnLeft(0.25);
 						   //nemala.driveForward(800);
-							nemala.driveForward(540,30);
-							nemala.turnLeft(0.25);
-							nemala.driveForward(1100,-1,84);
-							nemala.driveForward(520,30, 30);
-							nemala.driveForward(520,30, 84);
+							//nemala.driveForward(540,30);
+							//nemala.turnLeft(0.25);
+							//nemala.driveForward(1000,-1,84);
+							//nemala.driveForward(520,30, 30);
+							//nemala.driveForward(520,30, 84);
 						   break;
 				}
 			}
