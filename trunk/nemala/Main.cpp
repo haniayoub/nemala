@@ -4,11 +4,9 @@
 #define CALIB_DIV 1.1578
 #define CALIB_TOL 0
 #define CALIB_ERRTIMES 2999
-#define CALIB_DRIFTLIMIT 20
+//#define CALIB_DRIFTLIMIT 20
 #define MM_PER_ENC_TICK 1.7640573318632855567805953693495
 #define MM_PER_360_DEG 200
-#define TICKS_PER_360_DEG 316
-#define TURN_TOLERANCE 0
 
 /************************************************************************/
 /* Robot moving mode                                                    */
@@ -210,16 +208,7 @@ int main(int argc, char *argv[])
 						   cout << nemala.glob_calib_dir << endl;
 						   break;
 					   case 100:
-						   right_distance=nemala.readSonar(4);
-							left_distance = nemala.readSonar(0);
-							front_distance = nemala.readSonar(2);
-						   while (!(((right_distance <= 35) && (right_distance >= 25)) && ((left_distance <= 105) && (left_distance >= 95)))) {
-							   nemala.turnLeft();
-							right_distance=nemala.readSonar(4);
-							left_distance = nemala.readSonar(0);
-							front_distance = nemala.readSonar(2);
-							cout << "Right: " << right_distance << " Left: " << left_distance << " Front: " << front_distance << endl;
-							}
+						   nemala.turnLeft2(0.25);
 						   break;
 						case 1000:
 						   //nemala.driveForward(800);
@@ -227,11 +216,14 @@ int main(int argc, char *argv[])
 						   //nemala.driveForward(2550);
 						   //nemala.turnLeft(0.25);
 						   //nemala.driveForward(800);
-							nemala.driveForward2(540);
+							nemala.driveForward(1160,-30);
 							nemala.turnLeft(0.25);
-							nemala.driveForward2(2550);
+							nemala.driveForward(900);
+							nemala.driveForward(540);
+							nemala.driveForward(540);
+							nemala.driveForward(460);
 							nemala.turnLeft(0.25);
-							nemala.driveForward2(540);
+							nemala.driveForward(1110,30);
 							//nemala.driveForward(520,30, 84);
 						   break;
 				}

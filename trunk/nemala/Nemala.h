@@ -39,12 +39,13 @@ class Nemala
 public:
 	Nemala(Map *map, Orientation o);
 	Map			*map;
-	void		driveForwardCommand();
+	void		driveForwardCommand(Speed speed=0x20);
 	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveForward2(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveBackward();
 	void		turnLeftCommand(Speed speed=0x20);
 	void		turnLeft(float turn_amount_angle=0.25);
+	void		turnLeft2(float turn_amount_angle=0.25);
 	void		turnRightCommand(Speed speed=0x20);
 	void		turnRight(float turn_amount_angle=0.25);
 	void		stop();
