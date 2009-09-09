@@ -6,7 +6,6 @@
 #define CALIB_ERRTIMES 2999
 //#define CALIB_DRIFTLIMIT 20
 #define MM_PER_ENC_TICK 1.7640573318632855567805953693495
-#define MM_PER_360_DEG 200
 
 /************************************************************************/
 /* Robot moving mode                                                    */
@@ -20,7 +19,7 @@ int main(int argc, char *argv[])
 		int param;
 		bool fContinue = true;
 		NemalaMode mode = REGULAR;
-
+		int actual_front_dist;
 		while (fContinue) {
 			if(mode == Automatic)
 			{
@@ -216,14 +215,20 @@ int main(int argc, char *argv[])
 						   //nemala.driveForward(2550);
 						   //nemala.turnLeft(0.25);
 						   //nemala.driveForward(800);
-							nemala.driveForward(1160,30);
+							nemala.driveForward(1100,30,-1,-1);
 							nemala.turnLeft(0.25);
 							nemala.driveForward(900);
 							nemala.driveForward(540);
 							nemala.driveForward(540);
-							nemala.driveForward(460);
+							nemala.driveForward(460,-1,-1,30);
 							nemala.turnLeft(0.25);
-							nemala.driveForward(1110,30);
+							nemala.driveForward(11110,30,-1,30);
+							actual_front_dist=getMid(nemala.readSonar(2),nemala.readSonar(2),nemala.readSonar(2));
+							while (actual_front_dist < 28) {
+								nemala.driveBackward();
+								nemala.stop();
+								actual_front_dist=getMid(nemala.readSonar(2),nemala.readSonar(2),nemala.readSonar(2));
+							}
 							//nemala.driveForward(520,30, 84);
 						   break;
 				}

@@ -3,14 +3,14 @@
 // defines
 //#define STRICT
 //#define DEBUG
-#define COMPORT "COM1"
+#define COMPORT "COM2"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define DEFAULT_SPEED 30
 #define SonarForCM 256
 #define SonarDFEpselon 1
 //#define TICKS_PER_360_DEG 316
-#define TICKS_PER_360_DEG 200
+#define TICKS_PER_360_DEG 208
 #define CALIB_DRIFTLIMIT 10
 #define TURN_TOLERANCE 1
 #define MM_BETWEEN_SONAR_READS 250
@@ -124,6 +124,9 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	int glob_calib_fix;
 	int glob_r_enc, glob_l_enc;
 	int actual_left_dist,actual_front_dist,actual_right_dist;
+	if (front_dist > -1) {
+		front_dist+=2;
+	}
 	glob_r_enc=0;
 	glob_l_enc=0;
 	err_count=0;
@@ -132,14 +135,17 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	readSonar(0);readSonar(0);readSonar(0);
 	readSonar(4);readSonar(4);readSonar(4);
 	glob_calib_fix=glob_calib_avg*CALIB_DIV;
-	setDriftSpeed(glob_calib_avg);
-	setDriftDirection(glob_calib_dir?LEFT:RIGHT);
 	zeroEncoders();
-	int sonarcounter=0;
+	//setDriftSpeed(glob_calib_avg);
+	setDriftDirection(glob_calib_dir?LEFT:RIGHT);
+	int last_sonar_front=0;
+	int supposed_to_be=howlong;
+	int sonarcounter=1;
 	actual_left_dist=left_dist;
 	actual_front_dist=front_dist;
 	actual_right_dist=right_dist;
 	int sonarfixes=SONAR_NR_OF_FIXES;
+	driveForwardCommand(0x30);
 	while(1) {
 		short left, right;
 		driveForwardCommand();
@@ -147,7 +153,7 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 		right = getRightEncoder()+global_left_right_by_sonars;
 		glob_r_enc=right;
 		glob_l_enc=left;
-		if ((left_dist*right_dist*front_dist>-1) && ((glob_r_enc + glob_r_enc)/2 > sonarcounter*MM_BETWEEN_SONAR_READS/MM_PER_ENC_TICK)) {
+		if ((left_dist*right_dist*front_dist!=-1) && ((glob_r_enc + glob_r_enc)/2 > sonarcounter*MM_BETWEEN_SONAR_READS/MM_PER_ENC_TICK)) {
 			//setDriftSpeed(glob_calib_avg);
 			//setDriftDirection(glob_calib_dir?LEFT:RIGHT);
 			//driveForwardCommand(0x10);
@@ -155,22 +161,30 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 			actual_front_dist=front_dist;
 			actual_right_dist=right_dist;
 			if (left_dist > -1) {
-				actual_left_dist=getMid(readSonar(0),readSonar(0),readSonar(0));
+				//actual_left_dist=getMid(readSonar(0),readSonar(0),readSonar(0));
+				actual_left_dist=readSonar(0);
 				if (abs(left_dist-actual_left_dist) <= SonarDFEpselon) {
 					actual_left_dist=left_dist;
 				}
 			}
 			if (right_dist > -1) {
-				actual_right_dist=getMid(readSonar(4),readSonar(4),readSonar(4));
+				//actual_right_dist=getMid(readSonar(4),readSonar(4),readSonar(4));
+				actual_right_dist=readSonar(4);
 				if (abs(right_dist-actual_right_dist) <= SonarDFEpselon) {
 					actual_right_dist=right_dist;
 				}
 			}
 			if (front_dist > -1) {
+				//stop();
+				//actual_front_dist=getMid(readSonar(2),readSonar(2),readSonar(2));
 				actual_front_dist=readSonar(2);
 				if (abs(front_dist-actual_front_dist) <= SonarDFEpselon) {
 					actual_front_dist=front_dist;
 				}
+				howlong=MM_PER_ENC_TICK*(glob_r_enc + glob_r_enc)/2+10*actual_front_dist-10*front_dist;
+				last_sonar_front=actual_front_dist;
+				cout << "howlong: " << howlong << " Sonar: " << actual_front_dist << endl;
+				//driveForwardCommand();
 			}
 			sonarcounter++;
 			cout << "Left Err: " << actual_left_dist << " Right Err: " << actual_right_dist << endl;
@@ -223,8 +237,18 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 		}
 		//cout << "Left: " << glob_r_enc << " Right: " << glob_l_enc << " Diff: " << left-right << " and: " << glob_l_enc-glob_r_enc << endl;
 		if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
-			stop();
-			return;
+			if (front_dist > -1) {
+				//stop();
+				actual_front_dist=getMid(readSonar(2),readSonar(2),readSonar(2));
+				howlong=MM_PER_ENC_TICK*(glob_r_enc + glob_r_enc)/2+10*actual_front_dist-10*front_dist;
+				last_sonar_front=actual_front_dist;
+				cout << "howlong: " << howlong << " Sonar: " << actual_front_dist << endl;
+				//driveForwardCommand();
+			}
+			if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
+				stop();
+				return;
+			}
 		}
 	}
 #endif
