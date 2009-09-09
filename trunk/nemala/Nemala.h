@@ -34,6 +34,9 @@ typedef enum {
 	PORT_NOT_AVAILABLE_EXCEPTION
 } NemalaException;
 
+
+int getMid(int x, int y, int z);
+
 class Nemala
 {
 public:
