@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 						   //nemala.driveForward(2550);
 						   //nemala.turnLeft(0.25);
 						   //nemala.driveForward(800);
-							nemala.driveForward(1160,-30);
+							nemala.driveForward(1160,30);
 							nemala.turnLeft(0.25);
 							nemala.driveForward(900);
 							nemala.driveForward(540);

@@ -14,7 +14,7 @@
 #define CALIB_DRIFTLIMIT 10
 #define TURN_TOLERANCE 1
 #define MM_BETWEEN_SONAR_READS 250
-#define SONAR_NR_OF_FIXES 6
+#define SONAR_NR_OF_FIXES 8
 
 int getMid(int x, int y, int z) {
 	if (((x <= y) && (y<=z)) || ((x >= y) && (y>=z))) return y;
@@ -127,12 +127,14 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	glob_r_enc=0;
 	glob_l_enc=0;
 	err_count=0;
-	glob_calib_fix=glob_calib_avg*CALIB_DIV;
-	//setDriftSpeed(glob_calib_avg);
-	setDriftDirection(glob_calib_dir?LEFT:RIGHT);
-	zeroEncoders();
+	short global_left_right_by_sonars=0;
+	short global_left_by_sonars=0;
 	readSonar(0);readSonar(0);readSonar(0);
 	readSonar(4);readSonar(4);readSonar(4);
+	glob_calib_fix=glob_calib_avg*CALIB_DIV;
+	setDriftSpeed(glob_calib_avg);
+	setDriftDirection(glob_calib_dir?LEFT:RIGHT);
+	zeroEncoders();
 	int sonarcounter=0;
 	actual_left_dist=left_dist;
 	actual_front_dist=front_dist;
@@ -141,8 +143,8 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	while(1) {
 		short left, right;
 		driveForwardCommand();
-		left = getLeftEncoder();
-		right = getRightEncoder();
+		left = getLeftEncoder()+global_left_by_sonars+global_left_right_by_sonars;
+		right = getRightEncoder()+global_left_right_by_sonars;
 		glob_r_enc=right;
 		glob_l_enc=left;
 		if ((left_dist*right_dist*front_dist>-1) && ((glob_r_enc + glob_r_enc)/2 > sonarcounter*MM_BETWEEN_SONAR_READS/MM_PER_ENC_TICK)) {
@@ -177,8 +179,13 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 		//left+=glob_calib_fix;
 		glob_calib_fix=left-right;
 		if (sonarfixes < SONAR_NR_OF_FIXES) {
-			left+=(actual_left_dist-left_dist)/SonarDFEpselon;
-			right+=(actual_right_dist-right_dist)/SonarDFEpselon;
+			//if (!sonarfixes) {
+				global_left_by_sonars=right-left;
+				//global_left_right_by_sonars+=(left+right)/2;
+				//zeroEncoders();
+			//}
+			left+=0.8*(actual_left_dist-left_dist)/SonarDFEpselon;
+			right+=0.8*(actual_right_dist-right_dist)/SonarDFEpselon;
 			cout << "Sonar fixing total: " << (actual_right_dist-right_dist)/SonarDFEpselon << endl;
 			sonarfixes++;
 		}
