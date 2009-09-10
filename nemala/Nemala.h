@@ -67,8 +67,8 @@ public:
 	void		zeroEncoders();
 	void		terminate();
 	void		fineTune();
-	void		driveXaxis(int yFrom, int yTo);
-	void		driveYaxis(int xFrom, int xTo);
+	void		driveXaxis(int xFrom, int xTo, int y, StationType st);
+	void		driveYaxis(int yFrom, int yTo, int x, StationType st);
 	void		changeOrientation(Orientation o);
 	int			glob_calib_avg;
 	int			glob_calib_dir;

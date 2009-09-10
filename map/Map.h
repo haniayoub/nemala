@@ -12,7 +12,7 @@ using namespace std;
 /************************************************************************/
 /* Points definitions                                                   */
 /************************************************************************/
-#define POINT_1_X 210
+#define POINT_1_X 30
 #define POINT_1_Y 30
 #define POINT_2_X 210
 #define POINT_2_Y 30
@@ -52,7 +52,7 @@ using namespace std;
 /************************************************************************/
 typedef enum {NOT_BOUND, LEFT_BOUND, RIGHT_BOUND, TOP_BOUND, BUTTOM_BOUND, BASE_ANGLE} Bound;
 typedef enum {NORTH /*0*/, SOUTH /*1*/, EAST /*2*/, WEST /*3*/} Orientation;
-
+typedef enum {FIRST=1, LAST=100, BEFORE_LAST=99, MIDDLE=50, NOT_STATION=-1} StationType;
 /************************************************************************/
 /* Map Class                                                            */
 /************************************************************************/
@@ -60,7 +60,7 @@ class Map {
 public:
 	Map(int src_x, int src_y, int tgt_x, int tgt_y);
 	virtual ~Map();
-	bool	getNextStation(int &x, int &y);
+	StationType	getNextStation(int &x, int &y);
 	int		getCurrStation();
 	int		getDistance(int x, int y);
 	void	getDistances(int x, int y, Orientation o, int &northDist, int &southDist, int &eastDist , int &westDist);
@@ -76,7 +76,7 @@ private:
 	int changing[MAP_HIGHT];
 	int stations[MAP_WIDTH][MAP_HIGHT];
 	int currStation;
-
+	int numOfStations;
 	int tgt_x;
 	int tgt_y;
 

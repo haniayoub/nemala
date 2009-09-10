@@ -2,15 +2,15 @@
 
 // defines
 //#define STRICT
-//#define DEBUG
-#define COMPORT "COM2"
+#define DEBUG
+#define COMPORT "COM5"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define DEFAULT_SPEED 30
 #define SonarForCM 256
 #define SonarDFEpselon 1
 //#define TICKS_PER_360_DEG 316
-#define TICKS_PER_360_DEG 208
+#define TICKS_PER_360_DEG 204
 #define CALIB_DRIFTLIMIT 10
 #define TURN_TOLERANCE 1
 #define MM_BETWEEN_SONAR_READS 250
@@ -118,7 +118,7 @@ void Nemala::calibrate()
 }
 void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_dist, Distance front_dist)
 {
-	cout << "  Driving forward " << howlong << " mm" << endl;
+	cout << "  Driving forward " << howlong << " mm. " << "distances: right/left/front = " << right_dist << " " << left_dist << " " << front_dist << endl;
 #ifndef DEBUG
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
 	int glob_calib_fix;
@@ -806,22 +806,83 @@ void Nemala::changeOrientation(Orientation o)
 	curr_o = o;
 }
 
-void Nemala::driveXaxis(int xFrom, int xTo)
+void Nemala::driveXaxis(int xFrom, int xTo, int y, StationType st)
 {	
 	//cout << "driveXaxis from " << xFrom << "to " << xTo;
 	int dist = abs(xFrom-xTo);
+	int frontDist, rightDist, leftDist, backDist;
 
-	if(xFrom < xTo) changeOrientation(WEST);
-	else			changeOrientation(EAST);
-	driveForward(dist*10);
+	if(xFrom < xTo) 
+		changeOrientation(WEST);
+	else
+		changeOrientation(EAST);
+
+	map->getDistances(xTo, y, curr_o, frontDist, backDist, rightDist, leftDist);
+
+	if(st == LAST)
+	{
+		if(rightDist < leftDist)
+			driveForward(dist*10,rightDist, -1, frontDist);
+		else
+			driveForward(dist*10,-1, leftDist, frontDist);
+	}
+	else if(st == BEFORE_LAST)
+	{
+		driveForward(dist*10,-1, -1, frontDist);
+	}
+	else if(st == FIRST)
+	{
+		if(rightDist < leftDist)
+			driveForward(dist*10,rightDist, -1, -1);
+		else
+			driveForward(dist*10, -1, leftDist, -1);
+	}
+	else if(st == MIDDLE)
+	{
+		driveForward(dist*10);
+	}
+	else
+	{
+		throw "Bad station type";
+	}
 }
 
-void Nemala::driveYaxis(int yFrom, int yTo)
+void Nemala::driveYaxis(int yFrom, int yTo, int x, StationType st)
 {	
 	//cout << "driveYaxis from " << yFrom << "to " << yTo;
 	int dist = abs(yFrom-yTo);
+	int frontDist, rightDist, leftDist, backDist;
+	map->getDistances(x, yTo, curr_o, frontDist, backDist, rightDist, leftDist);
 
-	if(yFrom < yTo) changeOrientation(NORTH);
-	else			changeOrientation(SOUTH);
-	driveForward(dist*10);
+	if(yFrom < yTo) 
+		changeOrientation(NORTH);
+	else
+		changeOrientation(SOUTH);
+
+	if(st == LAST)
+	{
+		if(rightDist < leftDist)
+			driveForward(dist*10,rightDist, -1, frontDist);
+		else
+			driveForward(dist*10,-1, leftDist, frontDist);
+	}
+	else if(st == BEFORE_LAST)
+	{
+		driveForward(dist*10,-1, -1, frontDist);
+	}
+	else if(st == FIRST)
+	{
+		if(rightDist < leftDist)
+			driveForward(dist*10,rightDist, -1, -1);
+		else
+			driveForward(dist*10, -1, leftDist, -1);
+	}
+	else if(st == MIDDLE)
+	{
+		driveForward(dist*10);
+	}
+	else
+	{
+		throw "Bad station type";
+	}
 }
