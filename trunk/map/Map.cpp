@@ -23,7 +23,7 @@ Map::Map(int src_x, int src_y, int tgt_x, int tgt_y)
 /************************************************************************/
 /* Returns current station point                                        */
 /************************************************************************/
-bool Map::getNextStation(int &x, int &y)
+StationType Map::getNextStation(int &x, int &y)
 {
 	/*Keep returning the station position till there is no stations*/
 	currStation++;
@@ -33,11 +33,18 @@ bool Map::getNextStation(int &x, int &y)
 			{
 				x=i;
 				y=j;
-				return true;
+				if(currStation == numOfStations)
+					return LAST;
+				else if(currStation == numOfStations-1)
+					return BEFORE_LAST;
+				else if(currStation == 1)
+					return FIRST;
+				else
+					return MIDDLE;
 			}
 			x=-1;
 			y=-1;
-			return false;
+			return NOT_STATION;
 }
 
 /************************************************************************/
@@ -243,18 +250,27 @@ void Map::init()
 /* Sets stations matrix with numbers                                    */
 /************************************************************************/
 void Map::setStations()
-{	
+{
 	int currStation(1), j;
 	stations[src_x][src_y] = currStation++;
-	for(int i(0); i<MAP_HIGHT; i++)
+	
+	/*check if src and tgt are not in same cell*/
+	if(src_y != tgt_y)
 	{
-		if(changing[i] == 1)
+		for(int i(0); i<MAP_HIGHT; i++)
 		{
-			j = getNextStation(i);
-			stations[j][i] = currStation++;
+			if(changing[i] == 1)
+			{
+				j = getNextStation(i);
+				stations[j][i] = currStation++;
+			}
 		}
+		stations[tgt_x][tgt_y] = currStation;
+		numOfStations = currStation;
+		return;
 	}
-	stations[tgt_x][tgt_y] = currStation++;
+	stations[tgt_x][tgt_y] = currStation;
+	numOfStations = --currStation; /*the "--" is if we've only 2 stations...*/
 }
 
 /************************************************************************/

@@ -14,11 +14,11 @@ typedef enum {REGULAR, Joystick, Automatic} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
-		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_4_X, POINT_4_Y), WEST);
+		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_4_X, POINT_4_Y), EAST);
 		int whattodo;
 		int param;
 		bool fContinue = true;
-		NemalaMode mode = REGULAR;
+		NemalaMode mode = Automatic;
 		int actual_front_dist;
 		while (fContinue) {
 			if(mode == Automatic)
@@ -29,17 +29,18 @@ int main(int argc, char *argv[])
 				nemala.fineTune();
 
 				/* For each two following stations calculate the path and drive\turn the robot accordingly */
-				nemala.map->getNextStation(currX, currY);
-				cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << currX << "," << currY << ")" << endl;
-				while(nemala.map->getNextStation(nextX, nextY))
+				StationType currSt,  nextSt;
+				currSt = nemala.map->getNextStation(currX, currY);
+				cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << currX << "," << currY << ")" << " Type: " << currSt << endl;
+				while( (nextSt = nemala.map->getNextStation(nextX, nextY)) != NOT_STATION)
 				{
 					if(currX == nextX)
 					{ /* | */
-						nemala.driveYaxis(currY, nextY);
+						nemala.driveYaxis(currY, nextY, currX, currSt);
 					}
 					else if(currY == nextY)
 					{ /* - */
-						nemala.driveYaxis(currY, nextY);
+						nemala.driveXaxis(currX, nextX, currY, currSt);
 					}
 					else /* Choose path: (1) |_ (2) _| */
 					{
@@ -48,18 +49,23 @@ int main(int argc, char *argv[])
 
 						if(distXaxis > distYaxis) /* _| */
 						{
-							nemala.driveXaxis(currX, nextX);
-							nemala.driveYaxis(currY, nextY);
+							nemala.driveXaxis(currX, nextX, currY, currSt);
+							currSt = nextSt;
+							currX = nextX;
+							nemala.driveYaxis(currY, nextY, currX, currSt);
 						}
-						else if(distYaxis > distXaxis) /* |_ */
+						else if(distYaxis >= distXaxis) /* |_ */
 						{
-							nemala.driveYaxis(currY, nextY);
-							nemala.driveXaxis(currX, nextX);							
+							nemala.driveYaxis(currY, nextY, currX, currSt);
+							currSt = nextSt;
+							currY = nextY;
+							nemala.driveXaxis(currX, nextX, currY, currSt);							
 						}
 					}
-					currX = nextX;
-					currY = nextY;
-					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << endl;
+					currX  = nextX;
+					currY  = nextY;
+					currSt = nextSt;
+					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
 				}
 				return 0;
 			}			
