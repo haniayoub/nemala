@@ -10,11 +10,11 @@
 #define CALIB_DIV 1.1578
 #define CALIB_TOL 0
 #define CALIB_ERRTIMES 2999
-#define CALIB_DRIFTLIMIT 20
+//#define CALIB_DRIFTLIMIT 20
 #define MM_PER_ENC_TICK 1.7640573318632855567805953693495
-#define MM_PER_360_DEG 200
-#define TICKS_PER_360_DEG 316
-#define TURN_TOLERANCE 0
+//#define MM_PER_360_DEG 200
+//#define TICKS_PER_360_DEG 316
+//#define TURN_TOLERANCE 0
 
 using namespace std;
 
@@ -43,15 +43,18 @@ public:
 	Nemala(Map *map, Orientation o);
 	Map			*map;
 	void		driveForwardCommand(Speed speed=0x20);
+	void		driveBackwardCommand(Speed speed=0x20);
 	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveForward2(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
-	void		driveBackward();
+	void		driveBackward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		turnLeftCommand(Speed speed=0x20);
 	void		turnLeft(float turn_amount_angle=0.25);
 	void		turnLeft2(float turn_amount_angle=0.25);
 	void		turnRightCommand(Speed speed=0x20);
 	void		turnRight(float turn_amount_angle=0.25);
 	void		stop();
+	void		firstFineTune();
+	void		lastFineTune();
 	void		calibrate();
 	Speed		getMaxSpeed();
 	Speed		getMinSpeed();
@@ -86,4 +89,5 @@ private:
 	Distance _getdistance();
 	void	_connect();
 	void	_disconnect();
+	Orientation figureMyOrientation(int my_front, int my_left, int my_right, int needed_front, int needed_left, int needed_right, int needed_back, Orientation needed_o);
 };

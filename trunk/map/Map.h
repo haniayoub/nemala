@@ -69,6 +69,9 @@ public:
 	void	printStations();
 	int src_x;
 	int src_y;
+	int tgt_x;
+	int tgt_y;
+
 
 private:
 	int m[MAP_WIDTH][MAP_HIGHT];
@@ -77,9 +80,6 @@ private:
 	int stations[MAP_WIDTH][MAP_HIGHT];
 	int currStation;
 	int numOfStations;
-	int tgt_x;
-	int tgt_y;
-
 	void	init();
 	void	setStations();
 	int		getNextStation(int i);
