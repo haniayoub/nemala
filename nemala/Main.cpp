@@ -14,19 +14,20 @@ typedef enum {REGULAR, Joystick, Automatic} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
-		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_4_X, POINT_4_Y), EAST);
+		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_3_X, POINT_3_Y), WEST);
 		int whattodo;
 		int param;
 		bool fContinue = true;
-		NemalaMode mode = Automatic;
+		NemalaMode mode = REGULAR;
 		int actual_front_dist;
 		while (fContinue) {
 			if(mode == Automatic)
 			{
 				int currX, currY, nextX, nextY;
-
+				nemala.calibrate();
+				system("PAUSE");
 				/* Set the robot to the right orientation */
-				nemala.fineTune();
+				nemala.firstFineTune();
 
 				/* For each two following stations calculate the path and drive\turn the robot accordingly */
 				StationType currSt,  nextSt;
@@ -67,6 +68,8 @@ int main(int argc, char *argv[])
 					currSt = nextSt;
 					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
 				}
+				nemala.lastFineTune();
+				system("PAUSE");
 				return 0;
 			}			
 			else if(mode == REGULAR)
@@ -221,20 +224,19 @@ int main(int argc, char *argv[])
 						   //nemala.driveForward(2550);
 						   //nemala.turnLeft(0.25);
 						   //nemala.driveForward(800);
-							nemala.driveForward(1100,30,-1,-1);
-							nemala.turnLeft(0.25);
-							nemala.driveForward(900);
-							nemala.driveForward(540);
-							nemala.driveForward(540);
-							nemala.driveForward(460,-1,-1,30);
-							nemala.turnLeft(0.25);
-							nemala.driveForward(11110,30,-1,30);
-							actual_front_dist=getMid(nemala.readSonar(2),nemala.readSonar(2),nemala.readSonar(2));
-							while (actual_front_dist < 28) {
-								nemala.driveBackward();
-								nemala.stop();
-								actual_front_dist=getMid(nemala.readSonar(2),nemala.readSonar(2),nemala.readSonar(2));
-							}
+							
+							//nemala.firstFineTune();
+							//nemala.driveForward(1100,30,-1,-1);
+							//nemala.turnLeft(0.25);
+							//nemala.driveForward(900);
+							//nemala.driveForward(540);
+							//nemala.driveForward(540);
+							//nemala.driveForward(460,-1,-1,30);
+							//nemala.turnLeft(0.25);
+							//nemala.driveForward(11110,30,-1,30);
+							nemala.lastFineTune();
+							
+							//nemala.turnLeft();
 							//nemala.driveForward(520,30, 84);
 						   break;
 				}
