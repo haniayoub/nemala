@@ -61,6 +61,7 @@ public:
 	void		turnRightCommand(Speed speed=DEFAULT_SPEED);
 	void		turnRight(float turn_amount_angle=0.25);
 	void		stop();
+	void		stopFix();
 	void		firstFineTune();
 	void		lastFineTune();
 	void		calibrate();

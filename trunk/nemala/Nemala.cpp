@@ -163,21 +163,21 @@ void Nemala::lastFineTune() {
 		if (left < real_left-FINAL_DEST_EPSELON) {
 			turnRight(0.25);
 			if (abs(left-real_left)-ROBOT_LEN > 0)
-				driveForward((abs(left-real_left)-ROBOT_LEN)*10,-1,-1,-1,0x05);
+				driveForward(abs(left-real_left)*10,-1,-1,-1,0x05);
 		} else if (left > real_left+FINAL_DEST_EPSELON) {
 			turnLeft(0.25);
 			if (abs(left-real_left)-ROBOT_LEN > 0)
-				driveForward((abs(left-real_left)-ROBOT_LEN)*10,-1,-1,real_left-ROBOT_LEN,0x05);
+				driveForward((abs(left-real_left)-ROBOT_LEN/2)*10,-1,-1,real_left-ROBOT_LEN/2,0x05);
 		}
 	} else {
 		if (right < real_right-FINAL_DEST_EPSELON) {
 			turnLeft(0.25);
 			if (abs(right-real_right)-ROBOT_LEN > 0)
-				driveForward((abs(right-real_right)-ROBOT_LEN)*10,-1,-1,-1,0x05);
+				driveForward((abs(right-real_right)-ROBOT_LEN/2)*10,-1,-1,-1,0x05);
 		} else if (left > real_left+FINAL_DEST_EPSELON) {
 			turnRight(0.25);
 			if (abs(right-real_right)-ROBOT_LEN > 0)
-				driveForward((abs(right-real_right)-ROBOT_LEN)*10,-1,-1,real_right-ROBOT_LEN,0x05);
+				driveForward(abs(right-real_right)*10,-1,-1,real_right,0x05);
 		}
 	}
 }
@@ -283,12 +283,12 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	if (left_dist > -1) {
 		readSonar(0);
 		actual_left_dist=getMid(readSonar(0),readSonar(0),readSonar(0));
-		//left_dist=actual_left_dist;
+		left_dist=(actual_left_dist+left_dist)/2;
 	}
 	if (right_dist > -1) {
 		readSonar(4);
 		actual_right_dist=getMid(readSonar(4),readSonar(4),readSonar(4));
-		//right_dist=actual_right_dist;
+		right_dist=(actual_right_dist+right_dist)/2;
 	}
 	glob_calib_fix=glob_calib_avg*CALIB_DIV;
 	zeroEncoders();
@@ -405,7 +405,7 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 			}
 			if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
 				driveForwardCommand(0x02);
-				stop();
+				stopFix();
 				setDriftSpeed(glob_calib_avg);
 				setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 				updatePosition((glob_r_enc+glob_l_enc)/2.0);
@@ -603,7 +603,7 @@ BUG_STATE Nemala::driveForwardBug(Distance howlong, Distance right_dist, Distanc
 			}
 			if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
 				driveForwardCommand(0x02);
-				stop();
+				stopFix();
 				setDriftSpeed(glob_calib_avg);
 				setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 				updatePosition((glob_r_enc+glob_l_enc)/2.0);
@@ -925,14 +925,14 @@ void Nemala::turnRight(float turn_amount_angle)
 			setDriftDirection(RIGHT);
 			//nemala.setDriftSpeed(0);
 			zeroEncoders();
-			turnRightCommand(0x10);
+			turnRightCommand(0x0D);
 			stop();
 		} else if (abs(left-right) > turn_amount+TURN_TOLERANCE) {
 			for (int i=0; i<abs(left-right)-(turn_amount+TURN_TOLERANCE); i++) {
 				setDriftSpeed(CALIB_DRIFTLIMIT/2);
 				setDriftDirection(LEFT);
 				zeroEncoders();
-				turnLeftCommand(0x10);
+				turnLeftCommand(0x0D);
 				stop();
 				left = glob_l_enc-getLeftEncoder();
 				right = glob_r_enc-getRightEncoder();
@@ -1082,6 +1082,17 @@ void Nemala::stop()
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
+void Nemala::stopFix()
+{
+	stop();
+	if (glob_calib_dir == LEFT) {
+		turnRightCommand(0x02);
+	} else {
+		turnLeftCommand(0x02);
+	}
+	stop();
+}
+
 Speed Nemala::getMaxSpeed()
 {
 	char towrite[BUFF_SIZE];
