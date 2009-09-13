@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 						case 80: 
 							int dist;
 							cin >> dist;
-							nemala.driveForward(dist);
+							nemala.driveForward(dist,-1,-1,-1,0x05);
 						   break;
 						case 81:
 							float amount;
@@ -225,17 +225,47 @@ int main(int argc, char *argv[])
 						   //nemala.turnLeft(0.25);
 						   //nemala.driveForward(800);
 							
-							//nemala.firstFineTune();
-							//nemala.driveForward(1100,30,-1,-1);
-							//nemala.turnLeft(0.25);
-							//nemala.driveForward(900);
-							//nemala.driveForward(540);
-							//nemala.driveForward(540);
-							//nemala.driveForward(460,-1,-1,30);
-							//nemala.turnLeft(0.25);
-							//nemala.driveForward(11110,30,-1,30);
+							/* test for the hardcoded with first and last finetune
+							*/
+							nemala.firstFineTune();
+							nemala.driveForward(1100,30,-1,-1);
+							nemala.turnLeft(0.25);
+							nemala.driveForward(900);
+							nemala.driveForward(540);
+							nemala.driveForward(540);
+							nemala.driveForward(460,-1,-1,30);
+							nemala.turnLeft(0.25);
+							nemala.driveForward(11110,30,-1,30);
+							//nemala.curr_o=WEST;
+							//nemala.curr_x=30;
+							//nemala.curr_y=285;
 							nemala.lastFineTune();
 							
+
+							/* test for the byPass (bug)
+							
+							nemala.firstFineTune();
+							if (nemala.driveForwardBug(1100,30,-1,20) == BLOCKED) {
+								nemala.leftByPass();
+							}
+							nemala.turnLeft(0.25);
+							if (nemala.driveForwardBug(900,-1,-1,20) == BLOCKED) {
+								nemala.leftByPass();
+							}
+							if (nemala.driveForwardBug(540,-1,-1,20) == BLOCKED) {
+								nemala.leftByPass();
+							}
+							if (nemala.driveForwardBug(540,-1,-1,20) == BLOCKED) {
+								nemala.leftByPass();
+							}
+							if (nemala.driveForwardBug(460,-1,-1,20) == BLOCKED) {
+								nemala.leftByPass();
+							}
+							nemala.turnLeft(0.25);
+							nemala.driveForwardBug(11110,30,-1,30);
+							nemala.lastFineTune();
+							*/
+
 							//nemala.turnLeft();
 							//nemala.driveForward(520,30, 84);
 						   break;

@@ -7,6 +7,8 @@
 #include "..\CSerial\Serial.h"
 #include "..\map\Map.h"
 
+
+#define DEFAULT_SPEED 0x20
 #define CALIB_DIV 1.1578
 #define CALIB_TOL 0
 #define CALIB_ERRTIMES 2999
@@ -34,6 +36,11 @@ typedef enum {
 	PORT_NOT_AVAILABLE_EXCEPTION
 } NemalaException;
 
+typedef enum {	
+	BLOCKED, 
+	FREE
+} BUG_STATE;
+
 
 int getMid(int x, int y, int z);
 
@@ -42,15 +49,16 @@ class Nemala
 public:
 	Nemala(Map *map, Orientation o);
 	Map			*map;
-	void		driveForwardCommand(Speed speed=0x20);
-	void		driveBackwardCommand(Speed speed=0x20);
-	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
+	void		driveForwardCommand(Speed speed=DEFAULT_SPEED);
+	void		driveBackwardCommand(Speed speed=DEFAULT_SPEED);
+	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1, Speed s=DEFAULT_SPEED);
+	BUG_STATE		driveForwardBug(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveForward2(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveBackward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
-	void		turnLeftCommand(Speed speed=0x20);
+	void		turnLeftCommand(Speed speed=DEFAULT_SPEED);
 	void		turnLeft(float turn_amount_angle=0.25);
 	void		turnLeft2(float turn_amount_angle=0.25);
-	void		turnRightCommand(Speed speed=0x20);
+	void		turnRightCommand(Speed speed=DEFAULT_SPEED);
 	void		turnRight(float turn_amount_angle=0.25);
 	void		stop();
 	void		firstFineTune();
@@ -77,6 +85,9 @@ public:
 	int			glob_calib_dir;
 	Orientation curr_o;
 	virtual		~Nemala();
+	void		leftByPass();
+	void		rightByPass();
+	int curr_x, curr_y;
 
 private:
 	CSerial cs;
@@ -90,4 +101,8 @@ private:
 	void	_connect();
 	void	_disconnect();
 	Orientation figureMyOrientation(int my_front, int my_left, int my_right, int needed_front, int needed_left, int needed_right, int needed_back, Orientation needed_o);
+	void turnRight90();
+	void turnLeft90();
+	void updatePosition(int encoders);
+	void updatePositionUsingSonars();
 };
