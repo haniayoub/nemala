@@ -14,11 +14,11 @@ typedef enum {REGULAR, Joystick, Automatic} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
-		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_3_X, POINT_3_Y), WEST);
+		Nemala nemala(new Map(POINT_4_X, POINT_4_Y, POINT_2_X, POINT_2_Y), EAST);
 		int whattodo;
 		int param;
 		bool fContinue = true;
-		NemalaMode mode = REGULAR;
+		NemalaMode mode = Automatic;
 		int actual_front_dist;
 		while (fContinue) {
 			if(mode == Automatic)
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 						int distXaxis = nemala.map->getDistance(nextX, currY),
 							distYaxis = nemala.map->getDistance(currX, nextY);
 
-						if(distXaxis > distYaxis) /* _| */
+						if(distXaxis >= distYaxis) /* _| */
 						{
 							nemala.driveXaxis(currX, nextX, currY, currSt);
 							currSt = nextSt;
@@ -69,7 +69,6 @@ int main(int argc, char *argv[])
 					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
 				}
 				nemala.lastFineTune();
-				system("PAUSE");
 				return 0;
 			}			
 			else if(mode == REGULAR)
