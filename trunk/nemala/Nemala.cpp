@@ -2,7 +2,7 @@
 
 // defines
 //#define STRICT
-//#define DEBUG
+#define DEBUG
 #define COMPORT "COM1"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
@@ -121,6 +121,8 @@ Orientation Nemala::figureMyOrientation(int my_front, int my_left, int my_right,
 }
 
 void Nemala::firstFineTune() {
+	cout << "First tune..." << endl;
+#ifndef DEBUG
 	int real_front_dist, real_back_dist, real_right_dist, real_left_dist;
 	int front_dist, right_dist, left_dist;
 	map->getDistances(map->src_x, map->src_y, curr_o, real_front_dist, real_back_dist, real_right_dist, real_left_dist);
@@ -133,11 +135,14 @@ void Nemala::firstFineTune() {
 	curr_o = figureMyOrientation(front_dist, left_dist, right_dist, real_front_dist, real_left_dist, real_right_dist, real_back_dist, needed_to_be);
 	cout << "Current: " << curr_o << " Needed: " << needed_to_be << endl;
 	changeOrientation(needed_to_be);
+#endif
 }
 
 #define ROBOT_LEN 6
 #define ROBOT_WID 5
 void Nemala::lastFineTune() {
+	cout << "Last tune..." << endl;
+#ifndef DEBUG
 	int real_front, real_left, real_back, real_right;
 	map->getDistances(map->tgt_x, map->tgt_y, curr_o, real_front, real_back, real_right, real_left);
 	real_front=real_front-ROBOT_LEN/2;
@@ -180,6 +185,7 @@ void Nemala::lastFineTune() {
 				driveForward(abs(right-real_right)*10,-1,-1,real_right,0x05);
 		}
 	}
+#endif
 }
 
 void Nemala::driveForwardCommand(Speed speed)
@@ -191,6 +197,8 @@ void Nemala::driveForwardCommand(Speed speed)
 }
 void Nemala::calibrate()
 {
+	cout << "Calibrate..." << endl;
+#ifndef DEBUG
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
 	double glob_calib_fix;
 	double glob_r_enc, glob_l_enc;
@@ -260,6 +268,7 @@ void Nemala::calibrate()
 			return;
 		}
 	}
+#endif
 }
 void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_dist, Distance front_dist, Speed s)
 {

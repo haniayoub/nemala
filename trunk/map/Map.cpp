@@ -199,7 +199,10 @@ void Map::printAngles()
 /************************************************************************/
 void Map::printStations()
 {
-	printMatrix(stations);
+	for(int j(0); j<MAP_HIGHT; j++)
+		for(int i(0); i<MAP_WIDTH; i++)
+			if(stations[i][j] != 0)
+				cout << "stations[" << i << "]" << "[" << j << "]" << "=" << stations[i][j] << endl;
 }
 
 /************************************************************************/
@@ -225,9 +228,6 @@ void Map::init()
 			stations[i][j] = 0;
 			changing[j] = 0;
 		}
-	/* Obstacles points = -1 */
-		m[src_x][src_y] = 'S';
-		m[tgt_x][tgt_y] = 'T';
 
 		for(int i(0); i<OBSTACLE_WIDTH; i++)
 			for(int j(0); j<OBSTACLE_HIGHT; j++)
@@ -251,26 +251,65 @@ void Map::init()
 /************************************************************************/
 void Map::setStations()
 {
-	int currStation(1), j;
-	stations[src_x][src_y] = currStation++;
-	
-	/*check if src and tgt are not in same cell*/
-	if(src_y != tgt_y)
+	int firstCell = m[src_x][src_y];
+	int lastCell  = m[tgt_x][tgt_y];
+	int mode;	// 1 = move up 
+				// -1 = move down
+				// 0 = both in same cell
+	if(firstCell < lastCell)
+		mode = 1;
+	else if (firstCell > lastCell)
+		mode = -1;
+	else
+		mode = 0;
+
+	int currSt(1), j;
+	stations[src_x][src_y] = currSt++;
+
+	if(mode == 1)
 	{
 		for(int i(0); i<MAP_HIGHT; i++)
 		{
 			if(changing[i] == 1)
 			{
 				j = getNextStation(i);
-				stations[j][i] = currStation++;
+				stations[j][i] = currSt++;
 			}
 		}
-		stations[tgt_x][tgt_y] = currStation;
-		numOfStations = currStation;
+		stations[tgt_x][tgt_y] = currSt;
+		numOfStations = currSt;
+		printStations();
 		return;
 	}
-	stations[tgt_x][tgt_y] = currStation;
-	numOfStations = --currStation; /*the "--" is if we've only 2 stations...*/
+	else if(mode == -1)
+	{
+		for(int i(MAP_HIGHT); i>=0; i--)
+		{
+			if(changing[i] == 1)
+			{
+				j = getNextStation(i);
+				stations[j][i] = currSt++;
+			}
+		}
+		stations[tgt_x][tgt_y] = currSt;
+		numOfStations = currSt;
+		printStations();
+		return;
+	}
+	else if(mode == 0)
+	{
+		stations[tgt_x][tgt_y] = currSt;
+		numOfStations = --currSt;
+		printStations();
+	}
+}
+
+/************************************************************************/
+/* Set Path                                                             */
+/************************************************************************/
+void setPath()
+{
+	
 }
 
 /************************************************************************/
@@ -417,7 +456,8 @@ bool Map::isAngle(int x, int y)
 /************************************************************************/
 bool Map::isSartEndPoint(int x, int y)
 {
-	if( (m[x][y] == 'S') || (m[x][y] == 'T') )
+	if( ( (x == src_x) && (y == src_y) ) ||
+		( (x == tgt_x) && (y == tgt_y) ) )
 		return true;
 	else
 		return false;
