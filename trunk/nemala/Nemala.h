@@ -97,6 +97,8 @@ public:
 	virtual		~Nemala();
 	OBS_POS		leftByPass();
 	OBS_POS		rightByPass();
+	void		bypass();
+	void		bypass2ndChance();
 	int curr_x, curr_y;
 
 private:
