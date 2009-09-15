@@ -58,7 +58,7 @@ public:
 	void		driveForwardCommand(Speed speed=DEFAULT_SPEED);
 	void		driveBackwardCommand(Speed speed=DEFAULT_SPEED);
 	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1, Speed s=DEFAULT_SPEED);
-	BUG_STATE		driveForwardBug(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
+	BUG_STATE	driveForwardBug(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveForward2(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveBackward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		turnLeftCommand(Speed speed=DEFAULT_SPEED);
@@ -87,6 +87,8 @@ public:
 	void		fineTune();
 	void		driveXaxis(int xFrom, int xTo, int y, StationType st);
 	void		driveYaxis(int yFrom, int yTo, int x, StationType st);
+	BUG_STATE	driveXaxis_BUG(int xFrom, int xTo, int y, StationType st);
+	BUG_STATE	driveYaxis_BUG(int yFrom, int yTo, int x, StationType st);
 	void		changeOrientation(Orientation o);
 	void		changeOrientationFineTune(Orientation o);
 	int			glob_calib_avg;
