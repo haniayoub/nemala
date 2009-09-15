@@ -430,6 +430,16 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 BUG_STATE Nemala::driveForwardBug(Distance howlong, Distance right_dist, Distance left_dist, Distance front_dist)
 {
 	cout << "  Driving forward " << howlong << " mm. " << "distances: right/left/front = " << right_dist << " " << left_dist << " " << front_dist << endl;
+
+#ifdef DEBUG
+	if(this->map->getCurrStation() == 5)
+	{
+		curr_x = 114;
+		curr_y = 209;
+		return BLOCKED;
+	}
+#endif
+
 #ifndef DEBUG
 	int err_count; // after CALIB_ERRTIMES it will give a push to the other side
 	int glob_calib_fix;
@@ -1649,6 +1659,11 @@ BUG_STATE Nemala::driveYaxis_BUG(int yFrom, int yTo, int x, StationType st)
 	else if(st == BEFORE_LAST)
 	{
 		return driveForwardBug(dist*10,-1, -1, frontDist);
+	}
+	else if(st == BEFORE_BEFORE_LAST)
+	{
+		int fixCM = 10*10;
+		return driveForwardBug(dist*10 + fixCM);
 	}
 	else if(st == FIRST)
 	{

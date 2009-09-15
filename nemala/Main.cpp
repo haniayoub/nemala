@@ -36,9 +36,21 @@ int main(int argc, char *argv[])
 				while( (nextSt = nemala.map->getNextStation(nextX, nextY)) != NOT_STATION)
 				{
 					if(currX == nextX) /* | */
+					{
 						bs = nemala.driveYaxis_BUG(currY, nextY, currX, currSt);
+						if(bs == FREE)
+							nemala.map->fillYaxis(currY, nextY,	currX, RED);
+						else 
+							nemala.map->fillYaxis(currY, nemala.curr_y, currX, RED);
+					}
 					else if(currY == nextY) /* - */
+					{
 						bs = nemala.driveXaxis_BUG(currX, nextX, currY, currSt);
+						if(bs == FREE)
+							nemala.map->fillXaxis(currX, nextX, currY, RED);
+						else
+							nemala.map->fillXaxis(currX, nemala.curr_x, currY, RED);
+					}
 					else
 						throw "Exception: Koo3";
 
@@ -46,7 +58,7 @@ int main(int argc, char *argv[])
 					{
 						currX = nemala.curr_x;
 						currY = nemala.curr_y;
-						nemala.map->fillYaxis(currY, nextY, currX, GREEN);
+						
 						nemala.bypass();
 						if(nemala.map->updatePath(currX, currY))
 							continue;
