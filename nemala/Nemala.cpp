@@ -1295,6 +1295,7 @@ void Nemala::zeroEncoders()
 		}
 		catch (NemalaException ne)
 		{
+			cout << "Exception: " << ne;
 			continue;
 		}
 		break;
@@ -1309,6 +1310,7 @@ void Nemala::zeroEncoders()
 		}
 		catch (NemalaException ne)
 		{
+			cout << "Exception: " << ne;
 			continue;
 		}
 		break;
@@ -1663,4 +1665,14 @@ BUG_STATE Nemala::driveYaxis_BUG(int yFrom, int yTo, int x, StationType st)
 	{
 		throw "Bad station type";
 	}
+}
+
+void Nemala::bypass()
+{
+	//TODO: implement (choose between right\left bypass)
+}
+
+void Nemala::bypass2ndChance()
+{
+	//TODO: implementation
 }

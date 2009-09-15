@@ -305,7 +305,6 @@ void Map::setStations()
 	{
 		stations[tgt_x][tgt_y] = currSt;
 		numOfStations = --currSt;
-		printStations();
 	}
 	else
 	{
@@ -374,7 +373,6 @@ int Map::choosePath(int x1, int y1, int x2, int y2, int currSt)
 {
 	int distXaxis = getDistance(x2, y1),
 		distYaxis = getDistance(x1, y2);
-	printStations();
 
 	if(distXaxis > distYaxis)
 		return 1; // x then y
@@ -399,6 +397,7 @@ int Map::choosePath(int x1, int y1, int x2, int y2, int currSt)
 				return 1;
 		}
 	}
+	throw "Exception in choose path";
 }
 
 int	Map::choosPathByFirstOrientation()
@@ -433,7 +432,6 @@ void Map::setPath()
 		curr_y = next_y;
 	}
 	currStation = 0;
-	print();
 }
 
 void Map::fillYaxis(int y1, int y2, int x, char c)
@@ -642,4 +640,118 @@ Bound Map::isInBounds(int x, int y)
 		return BASE_ANGLE;
 
 	return NOT_BOUND;
+}
+
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+bool Map::updatePath(int newX, int newY)
+{
+	int closestX, closestY, closestStation;
+	if(getClosestPoint(newX, newY, closestX, closestY) == false)
+		return false;
+	closestStation = getClosestStation(closestX, closestY);
+	clearStations(closestStation-1);
+	stations[closestX][closestY] = closestStation-1;
+	currStation = closestStation-2;
+	return true;
+}
+
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+bool Map::getClosestPoint(int x, int y, int &closestX, int &closestY)
+{
+	for(int i(x); i>=0; i--)
+	{
+		if(m[i][y] == -1)
+			break;
+		if(m[i][y] == GREEN)
+		{
+			closestX = i;
+			closestY = y;
+			return true;
+		}
+	}
+	for(int i(x); i<MAP_WIDTH; i++)
+	{
+		if(m[i][y] == -1)
+			break;
+		if(m[i][y] == GREEN)
+		{
+			closestX = i;
+			closestY = y;
+			return true;
+		}
+	}
+	for(int j(y); j>=0; j--)
+	{
+		if(m[x][j] == -1)
+			break;
+		if(m[x][j] == GREEN)
+		{
+			closestX = x;
+			closestY = j;
+			return true;
+		}
+	}
+	for(int j(y); j<MAP_HIGHT; j++)
+	{
+		if(m[x][j] == -1)
+			break;
+		if(m[x][j] == GREEN)
+		{
+			closestX = x;
+			closestY = j;
+			return true;
+		}
+	}
+	return false;
+}
+
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+void Map::clearStations(int to)
+{
+	for(int i(0); i<MAP_WIDTH; i++)
+		for(int j(0); j<MAP_HIGHT; j++)
+		{
+			if(stations[i][j] <= numOfStations)
+				stations[i][j] = 0;
+		}
+}
+
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+int Map::getClosestStation(int x, int y)
+{
+	int minStationDist;
+	for(int stNum(currStation); stNum<=numOfStations; stNum++)
+	{
+		int stX, stY;
+		double minDist = calculateDistance(0,0, MAP_WIDTH, MAP_HIGHT);
+		getStationByNum(stNum, stX, stY);
+		if(stX == -1 || stY == -1)
+		{
+			throw "Bad Station: in getting closest station...";
+		}
+		if(minDist > calculateDistance(x, y, stX, stY))
+		{
+			minDist = calculateDistance(x, y, stX, stY);
+			minStationDist = stNum;
+		}
+	}
+	return minStationDist;
+}
+
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+double Map::calculateDistance(int x1, int y1, int x2, int y2)
+{
+	double xDiff = max(x1, x2) - min(x1, x2);
+	double yDiff = max(y1, y2) - min(y1, y2); 
+	return sqrt	( xDiff*xDiff + yDiff*yDiff);
 }
