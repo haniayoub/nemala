@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 				{
 					if(currX == nextX) /* | */
 					{
-						bs = nemala.driveYaxis_BUG(currY, nextY, currX, currSt);
+						bs = nemala.driveYaxis_BUG(currY, nextY, currX, nextSt);
 						if(bs == FREE)
 							nemala.map->fillYaxis(currY, nextY,	currX, RED);
 						else 
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 					}
 					else if(currY == nextY) /* - */
 					{
-						bs = nemala.driveXaxis_BUG(currX, nextX, currY, currSt);
+						bs = nemala.driveXaxis_BUG(currX, nextX, currY, nextSt);
 						if(bs == FREE)
 							nemala.map->fillXaxis(currX, nextX, currY, RED);
 						else
@@ -73,10 +73,10 @@ int main(int argc, char *argv[])
 								throw "Could not update path!";
 						}
 					}
+					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
 					currX  = nextX;
 					currY  = nextY;
 					currSt = nextSt;
-					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
 				}
 				nemala.lastFineTune();
 				return 0;
