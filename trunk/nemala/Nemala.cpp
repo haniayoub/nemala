@@ -2,20 +2,21 @@
 
 // defines
 //#define STRICT
-#define DEBUG
+//#define DEBUG
 #define COMPORT "COM1"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define SonarForCM 256
 #define SonarDFEpselon 1
 //#define TICKS_PER_360_DEG 316
-//#define TICKS_PER_360_DEG 184
-#define TICKS_PER_360_DEG 240
+//#define TICKS_PER_360_DEG 160
+#define TICKS_PER_360_DEG_RIGHT 196
+#define TICKS_PER_360_DEG_LEFT 204
 #define CALIB_DRIFTLIMIT 10
 #define TURN_TOLERANCE 0
-#define MM_BETWEEN_SONAR_READS 250
+#define MM_BETWEEN_SONAR_READS 220
 #define SONAR_NR_OF_FIXES 8
-#define FINAL_DEST_EPSELON 5
+#define FINAL_DEST_EPSELON 4
 
 int getMid(int x, int y, int z) {
 	if (((x <= y) && (y<=z)) || ((x >= y) && (y>=z))) return y;
@@ -134,7 +135,7 @@ void Nemala::firstFineTune() {
 	Orientation needed_to_be = curr_o;
 	curr_o = figureMyOrientation(front_dist, left_dist, right_dist, real_front_dist, real_left_dist, real_right_dist, real_back_dist, needed_to_be);
 	cout << "Current: " << curr_o << " Needed: " << needed_to_be << endl;
-	changeOrientation(needed_to_be);
+	changeOrientationFineTune(needed_to_be);
 #endif
 }
 
@@ -149,7 +150,7 @@ void Nemala::lastFineTune() {
 	int front, another;
 	front=getMid(readSonar(2),readSonar(2),readSonar(2));
 	if (front < real_front) {
-		while (front < real_front+ROBOT_LEN/2) {
+		while (front < real_front+ROBOT_LEN/3) {
 			driveBackwardCommand(0x15);
 			stop();
 			front=getMid(readSonar(2),readSonar(2),readSonar(2));
@@ -162,27 +163,28 @@ void Nemala::lastFineTune() {
 	int right=getMid(readSonar(4),readSonar(4),readSonar(4));
 	int left=getMid(readSonar(0),readSonar(0),readSonar(0));
 	another = min(left, right);
+	map->getDistances(map->tgt_x, map->tgt_y, curr_o, real_front, real_back, real_right, real_left);
 	real_right-=ROBOT_WID/2;
 	real_left-=ROBOT_WID/2;
 	if (left == another) {
 		if (left < real_left-FINAL_DEST_EPSELON) {
-			turnRight(0.25);
-			if (abs(left-real_left)-ROBOT_LEN > 0)
-				driveForward(abs(left-real_left)*10,-1,-1,-1,0x05);
+			turnRight(0.22);
+			if (abs(left-real_left)-ROBOT_WID/2 > 0)
+				driveForward((abs(left-real_left)-ROBOT_WID/2)*10,-1,-1,-1,0x05);
 		} else if (left > real_left+FINAL_DEST_EPSELON) {
-			turnLeft(0.25);
-			if (abs(left-real_left)-ROBOT_LEN > 0)
+			turnLeft(0.22);
+			if (abs(left-real_left)-ROBOT_LEN/2 > 0)
 				driveForward((abs(left-real_left)-ROBOT_LEN/2)*10,-1,-1,real_left-ROBOT_LEN/2,0x05);
 		}
 	} else {
 		if (right < real_right-FINAL_DEST_EPSELON) {
-			turnLeft(0.25);
-			if (abs(right-real_right)-ROBOT_LEN > 0)
-				driveForward((abs(right-real_right)-ROBOT_LEN/2)*10,-1,-1,-1,0x05);
-		} else if (left > real_left+FINAL_DEST_EPSELON) {
-			turnRight(0.25);
-			if (abs(right-real_right)-ROBOT_LEN > 0)
-				driveForward(abs(right-real_right)*10,-1,-1,real_right,0x05);
+			turnLeft(0.22);
+			if (abs(right-real_right)-ROBOT_WID/2 > 0)
+				driveForward((abs(right-real_right)-ROBOT_WID/2)*10,-1,-1,-1,0x05);
+		} else if (right > real_right+FINAL_DEST_EPSELON) {
+			turnRight(0.22);
+			if (abs(right-real_right)-ROBOT_LEN/2 > 0)
+				driveForward((abs(right-real_right)-ROBOT_LEN/2)*10,-1,-1,real_right-ROBOT_LEN/2,0x05);
 		}
 	}
 #endif
@@ -279,7 +281,7 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	int glob_r_enc, glob_l_enc;
 	int actual_left_dist,actual_front_dist,actual_right_dist;
 	if (front_dist > -1) {
-		front_dist+=FINAL_DEST_EPSELON;
+		front_dist+=ROBOT_LEN;
 	}
 	glob_r_enc=0;
 	glob_l_enc=0;
@@ -292,12 +294,12 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	if (left_dist > -1) {
 		readSonar(0);
 		actual_left_dist=getMid(readSonar(0),readSonar(0),readSonar(0));
-		left_dist=(actual_left_dist+left_dist)/2;
+		//left_dist=(3*actual_left_dist+left_dist)/4;
 	}
 	if (right_dist > -1) {
 		readSonar(4);
 		actual_right_dist=getMid(readSonar(4),readSonar(4),readSonar(4));
-		right_dist=(actual_right_dist+right_dist)/2;
+		//right_dist=(3*actual_right_dist+right_dist)/4;
 	}
 	glob_calib_fix=glob_calib_avg*CALIB_DIV;
 	zeroEncoders();
@@ -306,12 +308,12 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 	int last_sonar_front=0;
 	int supposed_to_be=howlong;
+	int sonarfixes=SONAR_NR_OF_FIXES;
 	if (front_dist > -1) {
 		howlong=getMid(readSonar(2), readSonar(2), readSonar(2))-front_dist;
+		sonarfixes=SONAR_NR_OF_FIXES-2;
 	}
 	int sonarcounter=1;
-	//int sonarfixes=SONAR_NR_OF_FIXES;
-	int sonarfixes=0;
 	driveForwardCommand(0x02);
 	while(1) {
 		short left, right;
@@ -918,51 +920,58 @@ void Nemala::turnRight(float turn_amount_angle)
 	int turn_amount;
 	//int turn_speed;
 	//turn_speed = 0x00;
-	turn_amount=turn_amount_angle*TICKS_PER_360_DEG;
+	turn_amount=turn_amount_angle*TICKS_PER_360_DEG_RIGHT;
 	right=left=0;
 	zeroEncoders();
 	glob_r_enc=0;
 	glob_l_enc=0;
+	//setDriftSpeed(0);
+	//setDriftSpeed(CALIB_DRIFTLIMIT/2);
+	//setDriftDirection(RIGHT);
 	//nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+	setDriftSpeed(glob_calib_avg);
+	setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 	while (1) {
 		left = getLeftEncoder()+glob_l_enc;
 		right = getRightEncoder()+glob_r_enc;
 		glob_r_enc=right;
 		glob_l_enc=left;
-		if (abs(left-right) < turn_amount-TURN_TOLERANCE) {
-			setDriftSpeed(CALIB_DRIFTLIMIT/2);
-			setDriftDirection(RIGHT);
-			//nemala.setDriftSpeed(0);
+		if (abs(left+right) < turn_amount-TURN_TOLERANCE) {
+		//if (abs(left) < 15) {
+			//setDriftSpeed(CALIB_DRIFTLIMIT/2);
+			//setDriftDirection(LEFT);
+			//setDriftSpeed(0);
 			zeroEncoders();
-			turnRightCommand(0x0D);
-			stop();
-		} else if (abs(left-right) > turn_amount+TURN_TOLERANCE) {
+			turnRightCommand(0x10);
+			stopTurn();
+		} else if (abs(left+right) > turn_amount+TURN_TOLERANCE) {
 			for (int i=0; i<abs(left-right)-(turn_amount+TURN_TOLERANCE); i++) {
-				setDriftSpeed(CALIB_DRIFTLIMIT/2);
-				setDriftDirection(LEFT);
+				//setDriftSpeed(CALIB_DRIFTLIMIT/2);
+				//setDriftDirection(LEFT);
+				//setDriftSpeed(0);
 				zeroEncoders();
-				turnLeftCommand(0x0D);
-				stop();
+				turnLeftCommand(0x10);
+				stopTurn();
 				left = glob_l_enc-getLeftEncoder();
 				right = glob_r_enc-getRightEncoder();
 				glob_r_enc=right;
 				glob_l_enc=left;
 				cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 			}
+			stopTurn();
 			setDriftSpeed(0);
-			stop();
 			return;
 		} else {
+			stopTurn();
 			setDriftSpeed(0);
-			stop();
 			cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 			return;
 		}
 		cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 	}
 	//cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+	stopTurn();
 	setDriftSpeed(0);
-	stop();
 	return;
 #endif
 }
@@ -976,50 +985,51 @@ void Nemala::turnLeft(float turn_amount_angle)
 	int turn_amount;
 	//int turn_speed;
 	//turn_speed = 0x00;
-	turn_amount=(int)(turn_amount_angle*TICKS_PER_360_DEG);
+	turn_amount=(int)(turn_amount_angle*TICKS_PER_360_DEG_LEFT);
 	right=left=0;
 	zeroEncoders();
 	glob_r_enc=0;
 	glob_l_enc=0;
 	//nemala.setDriftSpeed(CALIB_DRIFTLIMIT/2);
+	//setDriftDirection(LEFT);
+	//setDriftSpeed(2);
+	setDriftSpeed(glob_calib_avg);
+	setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 	while (1) {
 		left = getLeftEncoder()+glob_l_enc;
 		right = getRightEncoder()+glob_r_enc;
 		glob_r_enc=right;
 		glob_l_enc=left;
-		if (abs(left-right) < turn_amount-TURN_TOLERANCE) {
-			setDriftSpeed(CALIB_DRIFTLIMIT/2);
-			setDriftDirection(RIGHT);
-			//nemala.setDriftSpeed(0);
+		if (abs(left+right) < turn_amount-TURN_TOLERANCE) {
 			zeroEncoders();
 			turnLeftCommand(0x10);
-			stop();
+			stopTurn();
 		} else if (abs(left-right) > turn_amount+TURN_TOLERANCE) {
 			for (int i=0; i<abs(left-right)-(turn_amount+TURN_TOLERANCE); i++) {
-				setDriftSpeed(CALIB_DRIFTLIMIT/2);
-				setDriftDirection(LEFT);
+				//setDriftSpeed(CALIB_DRIFTLIMIT/2);
+				//setDriftDirection(LEFT);
 				turnRightCommand(0x10);
-				stop();
+				stopTurn();
 				left = glob_l_enc-getLeftEncoder();
 				right = glob_r_enc-getRightEncoder();
 				glob_r_enc=right;
 				glob_l_enc=left;
 				cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 			}
+			stopTurn();
 			setDriftSpeed(0);
-			stop();
 			return;
 		} else {
+			stopTurn();
 			setDriftSpeed(0);
-			stop();
 			cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 			return;
 		}
 		cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 	}
 	//cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
+	stopTurn();
 	setDriftSpeed(0);
-	stop();
 	return;
 #endif
 }
@@ -1035,7 +1045,7 @@ void Nemala::turnLeft2(float turn_amount_angle)
 	int speed = 0x09;
 	//int turn_speed;
 	//turn_speed = 0x00;
-	turn_amount=(int)(turn_amount_angle*TICKS_PER_360_DEG);
+	turn_amount=(int)(turn_amount_angle*TICKS_PER_360_DEG_LEFT);
 	right=left=0;
 	zeroEncoders();
 	glob_r_enc=0;
@@ -1091,13 +1101,20 @@ void Nemala::stop()
 	cs.Write(towrite, 4*sizeof(char));
 	_waitforv();
 }
+void Nemala::stopTurn()
+{
+	char towrite[BUFF_SIZE];
+	_dataprepare(0x20, 0x00, 0x00, towrite);
+	cs.Write(towrite, 4*sizeof(char));
+	_waitforv();
+}
 void Nemala::stopFix()
 {
 	stop();
 	if (glob_calib_dir == LEFT) {
-		turnRightCommand(0x02);
+		//turnRightCommand(0x02);
 	} else {
-		turnLeftCommand(0x02);
+		//turnLeftCommand(0x02);
 	}
 	stop();
 }
@@ -1321,6 +1338,29 @@ void Nemala::fineTune()
 	/*TODO: implement*/
 }
 
+void Nemala::changeOrientationFineTune(Orientation o)
+{
+	if(curr_o == o) return;
+
+	if(curr_o == NORTH && o == WEST ) turnLeft (0.23);
+	if(curr_o == NORTH && o == SOUTH) { turnLeft (0.23);turnLeft (0.23); };
+	if(curr_o == NORTH && o == EAST ) turnRight(0.24);
+
+	if(curr_o == WEST  && o == SOUTH) turnLeft (0.23);
+	if(curr_o == WEST  && o == EAST ) { turnLeft (0.23);turnLeft (0.23); };
+	if(curr_o == WEST  && o == NORTH) turnRight(0.24);
+
+	if(curr_o == SOUTH && o == EAST ) turnLeft (0.23);
+	if(curr_o == SOUTH && o == NORTH) { turnLeft (0.23);turnLeft (0.23); };
+	if(curr_o == SOUTH && o == WEST ) turnRight(0.24);
+
+	if(curr_o == EAST  && o == NORTH) turnLeft (0.23);
+	if(curr_o == EAST  && o == WEST ) { turnLeft (0.23);turnLeft (0.23); };
+	if(curr_o == EAST  && o == SOUTH) turnRight(0.24);
+
+	curr_o = o;
+}
+
 void Nemala::changeOrientation(Orientation o)
 {
 	if(curr_o == o) return;
@@ -1372,8 +1412,10 @@ void Nemala::driveXaxis(int xFrom, int xTo, int y, StationType st)
 	{
 		if(rightDist < leftDist)
 			driveForward(dist*10,rightDist, -1, -1);
+			//driveForward(dist*10,-1, -1, -1);
 		else
 			driveForward(dist*10, -1, leftDist, -1);
+			//driveForward(dist*10, -1, -1, -1);
 	}
 	else if(st == MIDDLE)
 	{
@@ -1412,8 +1454,10 @@ void Nemala::driveYaxis(int yFrom, int yTo, int x, StationType st)
 	{
 		if(rightDist < leftDist)
 			driveForward(dist*10,rightDist, -1, -1);
+			//driveForward(dist*10,-1, -1, -1);
 		else
 			driveForward(dist*10, -1, leftDist, -1);
+			//driveForward(dist*10, -1, -1, -1);
 	}
 	else if(st == MIDDLE)
 	{
@@ -1425,9 +1469,10 @@ void Nemala::driveYaxis(int yFrom, int yTo, int x, StationType st)
 	}
 }
 
-void Nemala::leftByPass() {
+OBS_POS Nemala::leftByPass() {
 	turnLeft90();
 	BUG_STATE status = driveForwardBug(INT_MAX,30,-1,20);
+	OBS_POS pos = oRIGHT;
 	//int rightdist = getMid(readSonar(4), readSonar(4), readSonar(4));
 	//int real_right, real_left, real_front, real_back;
 	//map->getDistances(curr_x, curr_y, curr_o, real_front, real_back, real_right, real_left);
@@ -1436,13 +1481,16 @@ void Nemala::leftByPass() {
 		turnLeft90();
 		turnLeft90();
 		driveForwardBug(INT_MAX,-1,30,20);
+		pos = oLEFT;
 	}
 	updatePositionUsingSonars(); //Dangerous - but in this case is alright because the obsitcle is behind us
+	return pos;
 }
 
-void Nemala::rightByPass() {
+OBS_POS Nemala::rightByPass() {
 	turnRight90();
 	BUG_STATE status = driveForwardBug(INT_MAX,-1,30,20);
+	OBS_POS pos = oLEFT;
 	//int leftdist = getMid(readSonar(0), readSonar(0), readSonar(0));
 	//int real_right, real_left, real_front, real_back;
 	//map->getDistances(curr_x, curr_y, curr_o, real_front, real_back, real_right, real_left);
@@ -1451,10 +1499,12 @@ void Nemala::rightByPass() {
 		turnRight90();
 		turnRight90();
 		driveForwardBug(INT_MAX,30,-1,20);
+		pos = oRIGHT;
 	}
 	curr_x;
 	curr_y;
 	updatePositionUsingSonars(); //Dangerous - but in this case is alright because the obsitcle is behind us
+	return pos;
 }
 
 void Nemala::turnLeft90() {

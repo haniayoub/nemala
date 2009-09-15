@@ -13,7 +13,8 @@
 #define CALIB_TOL 0
 #define CALIB_ERRTIMES 2999
 //#define CALIB_DRIFTLIMIT 20
-#define MM_PER_ENC_TICK 1.7640573318632855567805953693495
+//#define MM_PER_ENC_TICK 1.7640573318632855567805953693495
+#define MM_PER_ENC_TICK 1.86206051696680142104618400098
 //#define MM_PER_360_DEG 200
 //#define TICKS_PER_360_DEG 316
 //#define TURN_TOLERANCE 0
@@ -40,6 +41,11 @@ typedef enum {
 	BLOCKED, 
 	FREE
 } BUG_STATE;
+
+typedef enum {	
+	oLEFT, 
+	oRIGHT
+} OBS_POS;
 
 
 int getMid(int x, int y, int z);
@@ -82,12 +88,13 @@ public:
 	void		driveXaxis(int xFrom, int xTo, int y, StationType st);
 	void		driveYaxis(int yFrom, int yTo, int x, StationType st);
 	void		changeOrientation(Orientation o);
+	void		changeOrientationFineTune(Orientation o);
 	int			glob_calib_avg;
 	int			glob_calib_dir;
 	Orientation curr_o;
 	virtual		~Nemala();
-	void		leftByPass();
-	void		rightByPass();
+	OBS_POS		leftByPass();
+	OBS_POS		rightByPass();
 	int curr_x, curr_y;
 
 private:
@@ -96,6 +103,7 @@ private:
 	bool	_verifybuffer(char buff[4]);
 	DWORD	_readfrombuff(char* szBuffer, size_t size, bool blocking = true);
 	void	_waitforv();
+	void	stopTurn();
 	Param	_getparameter();
 	short	_getencoder();
 	Distance _getdistance();
