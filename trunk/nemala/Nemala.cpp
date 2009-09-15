@@ -2,7 +2,7 @@
 
 // defines
 //#define STRICT
-//#define DEBUG
+#define DEBUG
 #define COMPORT "COM1"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
@@ -1582,5 +1582,85 @@ void Nemala::updatePositionUsingSonars() {
 			curr_y=curr_y-right+real_right;
 			curr_x=curr_x-front+real_front;
 			break;
+	}
+}
+
+BUG_STATE Nemala::driveXaxis_BUG(int xFrom, int xTo, int y, StationType st)
+{	
+	//cout << "driveXaxis from " << xFrom << "to " << xTo;
+	int dist = abs(xFrom-xTo);
+	int frontDist, rightDist, leftDist, backDist;
+
+	if(xFrom < xTo) 
+		changeOrientation(WEST);
+	else
+		changeOrientation(EAST);
+
+	map->getDistances(xTo, y, curr_o, frontDist, backDist, rightDist, leftDist);
+
+	if(st == LAST)
+	{
+		if(rightDist < leftDist)
+			return driveForwardBug(dist*10,rightDist, -1, frontDist);
+		else
+			return driveForwardBug(dist*10,-1, leftDist, frontDist);
+	}
+	else if(st == BEFORE_LAST)
+	{
+		return driveForwardBug(dist*10,-1, -1, frontDist);
+	}
+	else if(st == FIRST)
+	{
+		if(rightDist < leftDist)
+			return driveForwardBug(dist*10,rightDist, -1, -1);
+		else
+			return driveForwardBug(dist*10, -1, leftDist, -1);
+	}
+	else if(st == MIDDLE)
+	{
+		return driveForwardBug(dist*10);
+	}
+	else
+	{
+		throw "Bad station type";
+	}
+}
+
+BUG_STATE Nemala::driveYaxis_BUG(int yFrom, int yTo, int x, StationType st)
+{	
+	int dist = abs(yFrom-yTo);
+	int frontDist, rightDist, leftDist, backDist;
+	map->getDistances(x, yTo, curr_o, frontDist, backDist, rightDist, leftDist);
+
+	if(yFrom < yTo) 
+		changeOrientation(NORTH);
+	else
+		changeOrientation(SOUTH);
+
+	if(st == LAST)
+	{
+		if(rightDist < leftDist)
+			return driveForwardBug(dist*10,rightDist, -1, frontDist);
+		else
+			return driveForwardBug(dist*10,-1, leftDist, frontDist);
+	}
+	else if(st == BEFORE_LAST)
+	{
+		return driveForwardBug(dist*10,-1, -1, frontDist);
+	}
+	else if(st == FIRST)
+	{
+		if(rightDist < leftDist)
+			return driveForwardBug(dist*10,rightDist, -1, -1);
+		else
+			return driveForwardBug(dist*10, -1, leftDist, -1);
+	}
+	else if(st == MIDDLE)
+	{
+		return driveForwardBug(dist*10);
+	}
+	else
+	{
+		throw "Bad station type";
 	}
 }

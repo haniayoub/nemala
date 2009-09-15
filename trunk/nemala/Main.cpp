@@ -5,20 +5,37 @@
 #define CALIB_TOL 0
 #define CALIB_ERRTIMES 2999
 //#define CALIB_DRIFTLIMIT 20
-//#define MM_PER_ENC_TICK 1.7640573318632855567805953693495
+#define MM_PER_ENC_TICK 1.7640573318632855567805953693495
 
 /************************************************************************/
 /* Robot moving mode                                                    */
 /************************************************************************/
-typedef enum {REGULAR, Joystick, Automatic} NemalaMode;
+typedef enum {REGULAR, Joystick, Automatic, Bug} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
-		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_3_X, POINT_3_Y), WEST);
+		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_2_X, POINT_2_Y), WEST);
+		Nemala nemala2(new Map(POINT_1_X, POINT_1_Y, POINT_3_X, POINT_3_Y), WEST);
+		Nemala nemala3(new Map(POINT_1_X, POINT_1_Y, POINT_4_X, POINT_4_Y), WEST);
+
+		Nemala nemala4(new Map(POINT_2_X, POINT_2_Y, POINT_1_X, POINT_1_Y), EAST);
+		Nemala nemala5(new Map(POINT_2_X, POINT_2_Y, POINT_3_X, POINT_3_Y), EAST);
+		Nemala nemala6(new Map(POINT_2_X, POINT_2_Y, POINT_4_X, POINT_4_Y), EAST);
+
+		Nemala nemala7(new Map(POINT_3_X, POINT_3_Y, POINT_1_X, POINT_1_Y), WEST);
+		
+		Nemala nemala8(new Map(POINT_3_X, POINT_3_Y, POINT_2_X, POINT_2_Y), WEST);
+		Nemala nemala9(new Map(POINT_3_X, POINT_3_Y, POINT_4_X, POINT_4_Y), WEST);
+
+		Nemala nemala10(new Map(POINT_4_X, POINT_4_Y, POINT_1_X, POINT_1_Y), EAST);
+		Nemala nemala11(new Map(POINT_4_X, POINT_4_Y, POINT_2_X, POINT_2_Y), EAST);
+		Nemala nemala12(new Map(POINT_4_X, POINT_4_Y, POINT_3_X, POINT_3_Y), EAST);
+
+		if(1) return 1;
 		int whattodo;
 		int param;
 		bool fContinue = true;
-		NemalaMode mode = REGULAR;
+		NemalaMode mode = Automatic;
 		int actual_front_dist;
 		while (fContinue) {
 			if(mode == Automatic)
@@ -35,43 +52,57 @@ int main(int argc, char *argv[])
 				cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << currX << "," << currY << ")" << " Type: " << currSt << endl;
 				while( (nextSt = nemala.map->getNextStation(nextX, nextY)) != NOT_STATION)
 				{
-					if(currX == nextX)
-					{ /* | */
+					if(currX == nextX) /* | */
 						nemala.driveYaxis(currY, nextY, currX, currSt);
-					}
-					else if(currY == nextY)
-					{ /* - */
+					else if(currY == nextY) /* - */
 						nemala.driveXaxis(currX, nextX, currY, currSt);
-					}
-					else /* Choose path: (1) |_ (2) _| */
-					{
-						int distXaxis = nemala.map->getDistance(nextX, currY),
-							distYaxis = nemala.map->getDistance(currX, nextY);
-
-						if(distXaxis > distYaxis) /* _| */
-						{
-							nemala.driveXaxis(currX, nextX, currY, currSt);
-							currSt = nextSt;
-							currX = nextX;
-							nemala.driveYaxis(currY, nextY, currX, currSt);
-						}
-						else if(distYaxis >= distXaxis) /* |_ */
-						{
-							nemala.driveYaxis(currY, nextY, currX, currSt);
-							currSt = nextSt;
-							currY = nextY;
-							nemala.driveXaxis(currX, nextX, currY, currSt);							
-						}
-					}
+					else
+						throw "Exception: Koo3";
+					if(nemala.map->getCurrStation() == 4)
+						nemala.map->print();
 					currX  = nextX;
 					currY  = nextY;
 					currSt = nextSt;
 					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
 				}
 				nemala.lastFineTune();
-				system("PAUSE");
 				return 0;
-			}			
+			}
+			if(mode == Bug)
+			{
+				int currX, currY, nextX, nextY;
+				nemala.calibrate();
+				system("PAUSE");
+				/* Set the robot to the right orientation */
+				nemala.firstFineTune();
+
+				/* For each two following stations calculate the path and drive\turn the robot accordingly */
+				StationType currSt,  nextSt;
+				currSt = nemala.map->getNextStation(currX, currY);
+				cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << currX << "," << currY << ")" << " Type: " << currSt << endl;
+				while( (nextSt = nemala.map->getNextStation(nextX, nextY)) != NOT_STATION)
+				{
+					if(currX == nextX) /* | */
+						if(nemala.driveYaxis_BUG(currY, nextY, currX, currSt) == BLOCKED)
+						{
+
+						}
+					else if(currY == nextY) /* - */
+						if(nemala.driveXaxis_BUG(currX, nextX, currY, currSt) == BLOCKED)
+						{
+
+						}
+					else
+						throw "Exception: Koo3";
+
+					currX  = nextX;
+					currY  = nextY;
+					currSt = nextSt;
+					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
+				}
+				nemala.lastFineTune();
+				return 0;
+			}
 			else if(mode == REGULAR)
 			{
 				bool status;
@@ -228,18 +259,18 @@ int main(int argc, char *argv[])
 							/* test for the hardcoded with first and last finetune
 							*/
 							//nemala.firstFineTune();
-							//nemala.driveForward(1800,-1,-1,-1);
+							//nemala.driveForward(1100,30,-1,-1);
 							//nemala.turnLeft(0.25);
 							//nemala.driveForward(900);
 							//nemala.driveForward(540);
 							//nemala.driveForward(540);
 							//nemala.driveForward(460,-1,-1,30);
-							//nemala.turnRight(0.25);
+							nemala.turnRight(0.25);
 							//nemala.driveForward(11110,30,-1,30);
 							//nemala.curr_o=WEST;
 							//nemala.curr_x=30;
 							//nemala.curr_y=285;
-							nemala.lastFineTune();
+							//nemala.lastFineTune();
 							
 
 							/* test for the byPass (bug)

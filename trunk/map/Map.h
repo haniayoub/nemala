@@ -53,6 +53,13 @@ using namespace std;
 typedef enum {NOT_BOUND, LEFT_BOUND, RIGHT_BOUND, TOP_BOUND, BUTTOM_BOUND, BASE_ANGLE} Bound;
 typedef enum {NORTH /*0*/, SOUTH /*1*/, EAST /*2*/, WEST /*3*/} Orientation;
 typedef enum {FIRST=1, LAST=100, BEFORE_LAST=99, MIDDLE=50, NOT_STATION=-1} StationType;
+
+/************************************************************************/
+/* Other definitions                                                    */
+/************************************************************************/
+#define GREEN '#'
+#define RED   '%'
+
 /************************************************************************/
 /* Map Class                                                            */
 /************************************************************************/
@@ -60,7 +67,7 @@ class Map {
 public:
 	Map(int src_x, int src_y, int tgt_x, int tgt_y);
 	virtual ~Map();
-	StationType	getNextStation(int &x, int &y);
+	StationType	getNextStation(int &x, int &y, bool fill = true);
 	int		getCurrStation();
 	int		getDistance(int x, int y);
 	void	getDistances(int x, int y, Orientation o, int &northDist, int &southDist, int &eastDist , int &westDist);
@@ -90,4 +97,10 @@ private:
 	bool	isSartEndPoint(int x, int y);
 	void	printMatrix(int M[MAP_WIDTH][MAP_HIGHT]);
 	Bound	isInBounds(int x, int y);
+	int		choosePath(int x1, int y1, int x2, int y2, int currSt);
+	int		choosPathByFirstOrientation();
+	void	setPath();
+	void	fillYaxis(int y1, int y2, int x, char c);
+	void	fillXaxis(int x1, int x2, int y, char c);
+	void	getStationByNum(int stNum, int &x, int &y);
 };

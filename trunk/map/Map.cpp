@@ -14,6 +14,7 @@ Map::Map(int src_x, int src_y, int tgt_x, int tgt_y)
 	findAngles();
 	decomposite();
 	setStations();
+	setPath();
 	/*After the C'tor is called, the matrix is decomposited and the matrix
 	  is divided by cells, each cell has a number, and stations which the 
 	  robot should follow is filled in stations matrix (can be taken calling
@@ -23,7 +24,7 @@ Map::Map(int src_x, int src_y, int tgt_x, int tgt_y)
 /************************************************************************/
 /* Returns current station point                                        */
 /************************************************************************/
-StationType Map::getNextStation(int &x, int &y)
+StationType Map::getNextStation(int &x, int &y, bool fill)
 {
 	/*Keep returning the station position till there is no stations*/
 	currStation++;
@@ -33,9 +34,22 @@ StationType Map::getNextStation(int &x, int &y)
 			{
 				x=i;
 				y=j;
-				if(currStation == numOfStations)
+
+				if(currStation > 1 && fill)
+				{
+					int prevX, prevY;
+					getStationByNum(currStation-1, prevX, prevY);
+					if(x == prevX)
+						fillYaxis(prevY, y, x, RED);
+					else if(y == prevY)
+						fillXaxis(prevX, x, y, RED);
+					else
+						throw "Exception in getNextStaion: still KOO3";
+				}
+
+				if(currStation == numOfStations-1)
 					return LAST;
-				else if(currStation == numOfStations-1)
+				else if(currStation == numOfStations-2)
 					return BEFORE_LAST;
 				else if(currStation == 1)
 					return FIRST;
@@ -45,6 +59,21 @@ StationType Map::getNextStation(int &x, int &y)
 			x=-1;
 			y=-1;
 			return NOT_STATION;
+}
+
+/************************************************************************/
+/* get Station coordinates                                              */
+/************************************************************************/
+void Map::getStationByNum(int stNum, int &x, int &y)
+{
+	for(int i(0); i<MAP_WIDTH; i++)
+		for(int j(0); j<MAP_HIGHT; j++)
+			if(stations[i][j] == stNum)
+			{
+				x=i; y=j;
+				return;
+			}
+	x=-1; y=-1;
 }
 
 /************************************************************************/
@@ -253,9 +282,12 @@ void Map::setStations()
 {
 	int firstCell = m[src_x][src_y];
 	int lastCell  = m[tgt_x][tgt_y];
-	int mode;	// 1 = move up 
+	int mode;	// 1 = move up
 				// -1 = move down
 				// 0 = both in same cell
+
+	int currXst, currYst, nextXst, nextYst;
+
 	if(firstCell < lastCell)
 		mode = 1;
 	else if (firstCell > lastCell)
@@ -264,52 +296,160 @@ void Map::setStations()
 		mode = 0;
 
 	int currSt(1), j;
-	stations[src_x][src_y] = currSt++;
 
-	if(mode == 1)
-	{
-		for(int i(0); i<MAP_HIGHT; i++)
-		{
-			if(changing[i] == 1)
-			{
-				j = getNextStation(i);
-				stations[j][i] = currSt++;
-			}
-		}
-		stations[tgt_x][tgt_y] = currSt;
-		numOfStations = currSt;
-		printStations();
-		return;
-	}
-	else if(mode == -1)
-	{
-		for(int i(MAP_HIGHT); i>=0; i--)
-		{
-			if(changing[i] == 1)
-			{
-				j = getNextStation(i);
-				stations[j][i] = currSt++;
-			}
-		}
-		stations[tgt_x][tgt_y] = currSt;
-		numOfStations = currSt;
-		printStations();
-		return;
-	}
-	else if(mode == 0)
+	currXst = src_x;
+	currYst = src_y;
+	stations[currXst][currYst] = currSt++;
+
+	if(mode == 0)
 	{
 		stations[tgt_x][tgt_y] = currSt;
 		numOfStations = --currSt;
 		printStations();
 	}
+	else
+	{
+		for(int i(mode==1 ? 0 : MAP_HIGHT-1); i<MAP_HIGHT && i>=0; i+=mode)
+		{
+			if(changing[i] == 1)
+			{
+				j = getNextStation(i);
+				//station[j][i] is next station...
+				nextXst = j;
+				nextYst = i;
+				
+				if( (currXst == nextXst) || (currYst == nextYst) )
+				{
+					stations[nextXst][nextYst] = currSt++;
+				}
+				else
+				{
+					int res = choosePath(currXst, currYst, nextXst, nextYst, currSt);
+
+					if(res == 1) /* _| */
+					{
+						stations[nextXst][currYst] = currSt++;
+						stations[nextXst][nextYst] = currSt++;
+					}
+					else /* |_ */
+					{
+						stations[currXst][nextYst] = currSt++;
+						stations[nextXst][nextYst] = currSt++;
+					}
+				}
+				currXst = nextXst;
+				currYst = nextYst;
+			}
+		}
+		nextXst = tgt_x;
+		nextYst = tgt_y;
+		if( (currXst == nextXst) || (currYst == nextYst) )
+		{
+			stations[nextXst][nextYst] = currSt++;
+		}
+		else
+		{
+			int res = choosePath(currXst, currYst, nextXst, nextYst, currSt);
+			if(res == 1) /* _| */
+			{
+				stations[nextXst][currYst] = currSt++;
+				stations[nextXst][nextYst] = currSt++;
+			}
+			else /* |_ */
+			{
+				stations[currXst][nextYst] = currSt++;
+				stations[nextXst][nextYst] = currSt++;
+			}
+		}
+		numOfStations = --currSt;
+		printStations();
+		return;
+	}
+}
+
+/************************************************************************/
+/* determine path to take                                               */
+/************************************************************************/
+int Map::choosePath(int x1, int y1, int x2, int y2, int currSt)
+{
+	int distXaxis = getDistance(x2, y1),
+		distYaxis = getDistance(x1, y2);
+	printStations();
+
+	if(distXaxis > distYaxis)
+		return 1; // x then y
+	else if(distXaxis < distYaxis)
+		return 0; // y then x
+	else //same distance => choose under the current orientation condition
+	{
+		if(currSt == 2)
+		{
+			return choosPathByFirstOrientation();
+		}
+		else
+		{
+			int temp_x1, temp_y1, temp_x2, temp_y2;
+			temp_x1 = x1;
+			temp_y1 = y1;
+			getStationByNum(currSt-1, temp_x2, temp_y2);
+
+			if(temp_x1 == temp_x2)
+				return 0;
+			else if(temp_y1 == temp_y2)
+				return 1;
+		}
+	}
+}
+
+int	Map::choosPathByFirstOrientation()
+{
+	return 1;
+	/*
+	if(src_x == POINT_1_X || src_x == POINT_3_X)
+		return 1;
+	else if(src_x == POINT_2_X || src_x == POINT_4_X)
+		return 0;
+	else
+		throw "Exception in choosing path...";
+	*/
 }
 
 /************************************************************************/
 /* Set Path                                                             */
 /************************************************************************/
-void setPath()
+void Map::setPath()
 {
-	
+	int curr_x, curr_y, next_x, next_y;
+	getNextStation(curr_x, curr_y);
+	while(getNextStation(next_x, next_y, false) != NOT_STATION)
+	{
+		if(curr_x == next_x)
+			fillYaxis(curr_y, next_y, curr_x, GREEN);
+		else if(curr_y == next_y)
+			fillXaxis(curr_x, next_x, curr_y, GREEN);
+		else
+			throw "Exception in setting path : path with Koo3";
+		curr_x = next_x;
+		curr_y = next_y;
+	}
+	currStation = 0;
+	print();
+}
+
+void Map::fillYaxis(int y1, int y2, int x, char c)
+{
+	int start = min(y1, y2);
+	int end = max(y1, y2);
+	for(int j(start); j<=end; j++)
+		m[x][j] = c;
+}
+
+void Map::fillXaxis(int x1, int x2, int y, char c)
+{
+	int start = min(x1, x2);
+	int end = max(x1, x2);
+	for(int i(start); i<=end; i++)
+		m[i][y] = c;
 }
 
 /************************************************************************/
