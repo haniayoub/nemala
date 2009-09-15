@@ -53,7 +53,7 @@ using namespace std;
 /************************************************************************/
 typedef enum {NOT_BOUND, LEFT_BOUND, RIGHT_BOUND, TOP_BOUND, BUTTOM_BOUND, BASE_ANGLE} Bound;
 typedef enum {NORTH /*0*/, SOUTH /*1*/, EAST /*2*/, WEST /*3*/} Orientation;
-typedef enum {FIRST=1, LAST=100, BEFORE_LAST=99, MIDDLE=50, NOT_STATION=-1} StationType;
+typedef enum {FIRST=1, LAST=100, BEFORE_BEFORE_LAST = 98, BEFORE_LAST=99, MIDDLE=50, NOT_STATION=-1} StationType;
 typedef enum {Xaxis, Yaxis, NoAxis} Axis;
 
 /************************************************************************/

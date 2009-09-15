@@ -34,7 +34,7 @@ StationType Map::getNextStation(int &x, int &y, bool fill)
 			{
 				x=i;
 				y=j;
-
+/*
 				if(currStation > 1 && fill)
 				{
 					int prevX, prevY;
@@ -46,11 +46,13 @@ StationType Map::getNextStation(int &x, int &y, bool fill)
 					else
 						throw "Exception in getNextStaion: still KOO3";
 				}
-
+*/
 				if(currStation == numOfStations-1)
 					return LAST;
 				else if(currStation == numOfStations-2)
 					return BEFORE_LAST;
+				else if(currStation == numOfStations-3)
+					return BEFORE_BEFORE_LAST;
 				else if(currStation == 1)
 					return FIRST;
 				else
@@ -228,10 +230,12 @@ void Map::printAngles()
 /************************************************************************/
 void Map::printStations()
 {
+	cout << "======== Stations ========" << endl;
 	for(int j(0); j<MAP_HIGHT; j++)
 		for(int i(0); i<MAP_WIDTH; i++)
 			if(stations[i][j] != 0)
 				cout << "stations[" << i << "]" << "[" << j << "]" << "=" << stations[i][j] << endl;
+	cout << "==========================" << endl;
 }
 
 /************************************************************************/
@@ -654,6 +658,7 @@ bool Map::updatePath(int newX, int newY)
 	clearStations(closestStation-1);
 	stations[closestX][closestY] = closestStation-1;
 	currStation = closestStation-2;
+	printStations();
 	return true;
 }
 
@@ -717,7 +722,7 @@ void Map::clearStations(int to)
 	for(int i(0); i<MAP_WIDTH; i++)
 		for(int j(0); j<MAP_HIGHT; j++)
 		{
-			if(stations[i][j] <= numOfStations)
+			if(stations[i][j] <= to)
 				stations[i][j] = 0;
 		}
 }
