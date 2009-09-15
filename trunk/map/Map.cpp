@@ -34,27 +34,17 @@ StationType Map::getNextStation(int &x, int &y, bool fill)
 			{
 				x=i;
 				y=j;
-/*
-				if(currStation > 1 && fill)
-				{
-					int prevX, prevY;
-					getStationByNum(currStation-1, prevX, prevY);
-					if(x == prevX)
-						fillYaxis(prevY, y, x, RED);
-					else if(y == prevY)
-						fillXaxis(prevX, x, y, RED);
-					else
-						throw "Exception in getNextStaion: still KOO3";
-				}
-*/
-				if(currStation == numOfStations-1)
+
+				if(currStation == numOfStations)
 					return LAST;
-				else if(currStation == numOfStations-2)
+				else if(currStation == numOfStations-1)
 					return BEFORE_LAST;
-				else if(currStation == numOfStations-3)
+				else if(currStation == numOfStations-2)
 					return BEFORE_BEFORE_LAST;
-				else if(currStation == 1)
+				else if(currStation == 2)
 					return FIRST;
+				else if(currStation == 1)
+					return BEFORE_FIRST;
 				else
 					return MIDDLE;
 			}
