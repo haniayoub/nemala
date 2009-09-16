@@ -8,7 +8,7 @@
 #include "..\map\Map.h"
 
 
-#define DEFAULT_SPEED 0x20
+#define DEFAULT_SPEED 0x1C
 #define CALIB_DIV 1.1578
 #define CALIB_TOL 0
 #define CALIB_ERRTIMES 2999
@@ -58,7 +58,7 @@ public:
 	void		driveForwardCommand(Speed speed=DEFAULT_SPEED);
 	void		driveBackwardCommand(Speed speed=DEFAULT_SPEED);
 	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1, Speed s=DEFAULT_SPEED);
-	BUG_STATE	driveForwardBug(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
+	BUG_STATE	driveForwardBug(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1, Speed s=DEFAULT_SPEED, bool secondbypass=false);
 	void		driveForward2(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveBackward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		turnLeftCommand(Speed speed=DEFAULT_SPEED);
@@ -97,8 +97,9 @@ public:
 	virtual		~Nemala();
 	OBS_POS		leftByPass();
 	OBS_POS		rightByPass();
-	void		bypass();
-	void		bypass2ndChance();
+	BUG_STATE		secondByPass(OBS_POS p);
+	OBS_POS		bypass();
+	void		bypass2ndChance(OBS_POS op);
 	int curr_x, curr_y;
 
 private:
