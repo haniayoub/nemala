@@ -14,7 +14,7 @@ typedef enum {REGULAR, Joystick, Automatic, Bug} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
-		Nemala nemala(new Map(POINT_3_X, POINT_3_Y, POINT_1_X, POINT_1_Y), WEST);
+		Nemala nemala(new Map(POINT_2_X, POINT_2_Y, POINT_4_X, POINT_4_Y), EAST);
 		int whattodo;
 		int param;
 		bool fContinue = true;

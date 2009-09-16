@@ -3,15 +3,15 @@
 // defines
 //#define STRICT
 //#define DEBUG
-#define COMPORT "COM1"
+#define COMPORT "COM5"
 #define CHECK_SUM(x,y,z) ((char)(((char)x+(char)y+(char)z)%256))
 #define BUFF_SIZE 5
 #define SonarForCM 256
 #define SonarDFEpselon 1
 //#define TICKS_PER_360_DEG 316
 //#define TICKS_PER_360_DEG 160
-#define TICKS_PER_360_DEG_RIGHT 196
-#define TICKS_PER_360_DEG_LEFT 204
+#define TICKS_PER_360_DEG_RIGHT 200
+#define TICKS_PER_360_DEG_LEFT 200
 #define CALIB_DRIFTLIMIT 10
 #define TURN_TOLERANCE 0
 #define MM_BETWEEN_SONAR_READS 200
@@ -309,13 +309,13 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 	setDriftDirection(glob_calib_dir?RIGHT:LEFT);
 	int last_sonar_front=0;
 	int supposed_to_be=howlong;
-	int sonarfixes=0;
+	int sonarfixes=1;
 	if (front_dist > -1) {
 		howlong=getMid(readSonar(2), readSonar(2), readSonar(2))-front_dist;
 		sonarfixes=SONAR_NR_OF_FIXES-2;
 	}
 	int sonarcounter=1;
-	driveForwardCommand(0x02);
+	//driveForwardCommand(0x02);
 	while(1) {
 		short left, right;
 		driveForwardCommand(s);
@@ -367,7 +367,7 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 		glob_calib_fix=left-right;
 		if (sonarfixes < SONAR_NR_OF_FIXES) {
 			//if (!sonarfixes) {
-				global_left_by_sonars=right-left;
+				//global_left_by_sonars=right-left;
 				//global_left_right_by_sonars+=(left+right)/2;
 				//zeroEncoders();
 			//}
@@ -419,7 +419,7 @@ void Nemala::driveForward(Distance howlong, Distance right_dist, Distance left_d
 				//driveForwardCommand();
 			}
 			if ((glob_r_enc+glob_l_enc)/2.0 >= (howlong)/MM_PER_ENC_TICK) {
-				driveForwardCommand(0x02);
+				//driveForwardCommand(0x02);
 				stopFix();
 				setDriftSpeed(glob_calib_avg);
 				setDriftDirection(glob_calib_dir?RIGHT:LEFT);
@@ -1013,6 +1013,7 @@ void Nemala::turnRight(float turn_amount_angle)
 	//cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 	stopTurn();
 	setDriftSpeed(0);
+	stopTurn();
 	return;
 #endif
 }
@@ -1070,6 +1071,7 @@ void Nemala::turnLeft(float turn_amount_angle)
 	//cout << "Right: " << right << " Left: " << left << " Until: " << turn_amount << endl;
 	stopTurn();
 	setDriftSpeed(0);
+	stopTurn();
 	return;
 #endif
 }
@@ -1151,9 +1153,9 @@ void Nemala::stopFix()
 {
 	stop();
 	if (glob_calib_dir == LEFT) {
-		turnRightCommand(0x02);
+		//turnRightCommand(0x02);
 	} else {
-		turnLeftCommand(0x02);
+		//turnLeftCommand(0x02);
 	}
 	stop();
 }
@@ -1383,21 +1385,21 @@ void Nemala::changeOrientationFineTune(Orientation o)
 {
 	if(curr_o == o) return;
 
-	if(curr_o == NORTH && o == WEST ) turnLeft (0.23);
-	if(curr_o == NORTH && o == SOUTH) { turnRight(0.24);turnRight (0.24); };
-	if(curr_o == NORTH && o == EAST ) turnRight(0.24);
+	if(curr_o == NORTH && o == WEST ) turnLeft (0.25);
+	if(curr_o == NORTH && o == SOUTH) { turnRight(0.25);turnRight (0.25); };
+	if(curr_o == NORTH && o == EAST ) turnRight(0.25);
 
-	if(curr_o == WEST  && o == SOUTH) turnLeft (0.23);
-	if(curr_o == WEST  && o == EAST ) { turnRight(0.24);turnRight (0.24); };
-	if(curr_o == WEST  && o == NORTH) turnRight(0.24);
+	if(curr_o == WEST  && o == SOUTH) turnLeft (0.25);
+	if(curr_o == WEST  && o == EAST ) { turnRight(0.25);turnRight (0.25); };
+	if(curr_o == WEST  && o == NORTH) turnRight(0.25);
 
-	if(curr_o == SOUTH && o == EAST ) turnLeft (0.23);
-	if(curr_o == SOUTH && o == NORTH) { turnRight(0.24);turnRight (0.24); };
-	if(curr_o == SOUTH && o == WEST ) turnRight(0.24);
+	if(curr_o == SOUTH && o == EAST ) turnLeft (0.25);
+	if(curr_o == SOUTH && o == NORTH) { turnRight(0.25);turnRight (0.25); };
+	if(curr_o == SOUTH && o == WEST ) turnRight(0.25);
 
-	if(curr_o == EAST  && o == NORTH) turnLeft (0.23);
-	if(curr_o == EAST  && o == WEST ) { turnRight(0.24);turnRight (0.24); };
-	if(curr_o == EAST  && o == SOUTH) turnRight(0.24);
+	if(curr_o == EAST  && o == NORTH) turnLeft (0.25);
+	if(curr_o == EAST  && o == WEST ) { turnRight(0.25);turnRight (0.25); };
+	if(curr_o == EAST  && o == SOUTH) turnRight(0.25);
 
 	curr_o = o;
 }
