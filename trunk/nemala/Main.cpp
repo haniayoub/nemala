@@ -5,7 +5,7 @@
 #define CALIB_TOL 0
 #define CALIB_ERRTIMES 2999
 //#define CALIB_DRIFTLIMIT 20
-#define MM_PER_ENC_TICK 1.7640573318632855567805953693495
+//#define MM_PER_ENC_TICK 1.7640573318632855567805953693495
 
 /************************************************************************/
 /* Robot moving mode                                                    */
@@ -14,11 +14,11 @@ typedef enum {REGULAR, Joystick, Automatic, Bug} NemalaMode;
 int main(int argc, char *argv[])
 {
 	try{
-		Nemala nemala(new Map(POINT_1_X, POINT_1_Y, POINT_4_X, POINT_4_Y), WEST);
+		Nemala nemala(new Map(POINT_3_X, POINT_3_Y, POINT_1_X, POINT_1_Y), WEST);
 		int whattodo;
 		int param;
 		bool fContinue = true;
-		NemalaMode mode = Bug;
+		NemalaMode mode = REGULAR;
 		while (fContinue) {
 			if(mode == Bug)
 			{
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 				nemala.calibrate();
 				system("PAUSE");
 				/* Set the robot to the right orientation */
-				nemala.firstFineTune();
+				//nemala.firstFineTune();
 
 				/* For each two following stations calculate the path and drive\turn the robot accordingly */
 				StationType currSt,  nextSt;
@@ -55,16 +55,15 @@ int main(int argc, char *argv[])
 						throw "Exception: Koo3";
 
 					if(bs == BLOCKED)
-					{
+					{	
+						OBS_POS op = nemala.bypass();
 						currX = nemala.curr_x;
 						currY = nemala.curr_y;
-						
-						nemala.bypass();
 						if(nemala.map->updatePath(currX, currY))
 							continue;
 						else
 						{
-							nemala.bypass2ndChance();
+							nemala.bypass2ndChance(op);
 							currX = nemala.curr_x;
 							currY = nemala.curr_y;
 							if(nemala.map->updatePath(currX, currY))
@@ -74,11 +73,13 @@ int main(int argc, char *argv[])
 						}
 					}
 					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
+					cout << "X: " << nemala.curr_x << " Y: " << nemala.curr_y << endl;
 					currX  = nextX;
 					currY  = nextY;
 					currSt = nextSt;
 				}
 				nemala.lastFineTune();
+				system("PAUSE");
 				return 0;
 			}
 			else if(mode == Automatic)
@@ -96,9 +97,9 @@ int main(int argc, char *argv[])
 				while( (nextSt = nemala.map->getNextStation(nextX, nextY)) != NOT_STATION)
 				{
 					if(currX == nextX) /* | */
-						nemala.driveYaxis(currY, nextY, currX, currSt);
+						nemala.driveYaxis(currY, nextY, currX, nextSt);
 					else if(currY == nextY) /* - */
-						nemala.driveXaxis(currX, nextX, currY, currSt);
+						nemala.driveXaxis(currX, nextX, currY, nextSt);
 					else
 						throw "Exception: Koo3";
 					currX  = nextX;
@@ -135,6 +136,7 @@ int main(int argc, char *argv[])
 				cout << "-1. TERMINATE!" << endl;
 				cout << "99. Move to joystick mode" << endl;
 				cout << "98. Move to Automatic mode" << endl;
+				cout << "97. Move to BUG mode" << endl;
 				cout << "z. Return to normal mode" << endl;
 				cin >> whattodo;
 
@@ -205,7 +207,7 @@ int main(int argc, char *argv[])
 						case 80: 
 							int dist;
 							cin >> dist;
-							nemala.driveForward(dist,-1,-1,-1,0x05);
+							nemala.driveForward(dist,-1,-1,-1);
 						   break;
 						case 81:
 							float amount;
@@ -242,6 +244,10 @@ int main(int argc, char *argv[])
 						   mode = Automatic;
 						   cout << "Automatic mode" << endl;
 						   break;
+					   case 97: 
+						   mode = Bug;
+						   cout << "Bug mode" << endl;
+						   break;
 					   case 99: 
 						   mode = Joystick;
 						   cout << "Joystick mode" << endl;
@@ -270,7 +276,7 @@ int main(int argc, char *argv[])
 							//nemala.driveForward(540);
 							//nemala.driveForward(540);
 							//nemala.driveForward(460,-1,-1,30);
-							nemala.turnRight(0.25);
+							//nemala.turnRight(0.25);
 							//nemala.driveForward(11110,30,-1,30);
 							//nemala.curr_o=WEST;
 							//nemala.curr_x=30;
@@ -278,9 +284,14 @@ int main(int argc, char *argv[])
 							//nemala.lastFineTune();
 							
 
-							/* test for the byPass (bug)
-							
-							nemala.firstFineTune();
+							// test for the byPass (bug)
+							nemala.calibrate();
+							system("PAUSE");
+							OBS_POS p = nemala.leftByPass();
+							BUG_STATE state = nemala.secondByPass(p);
+							system("PAUSE");
+							//nemala.firstFineTune();
+							/*
 							if (nemala.driveForwardBug(1100,30,-1,20) == BLOCKED) {
 								nemala.leftByPass();
 							}
@@ -301,7 +312,6 @@ int main(int argc, char *argv[])
 							nemala.driveForwardBug(11110,30,-1,30);
 							nemala.lastFineTune();
 							*/
-
 							//nemala.turnLeft();
 							//nemala.driveForward(520,30, 84);
 						   break;
