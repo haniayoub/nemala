@@ -57,8 +57,8 @@ public:
 	Map			*map;
 	void		driveForwardCommand(Speed speed=DEFAULT_SPEED);
 	void		driveBackwardCommand(Speed speed=DEFAULT_SPEED);
-	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1, Speed s=DEFAULT_SPEED);
-	BUG_STATE	driveForwardBug(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1, Speed s=DEFAULT_SPEED, bool secondbypass=false);
+	void		driveForward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1, Speed s=DEFAULT_SPEED, Distance skipuntillast=INT_MAX);
+	BUG_STATE	driveForwardBug(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1, Speed s=DEFAULT_SPEED, bool secondbypass=false, Distance skipuntillast=INT_MAX);
 	void		driveForward2(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		driveBackward(Distance howlong=100, Distance right_dist=-1, Distance left_dist=-1, Distance front_dist=-1);
 	void		turnLeftCommand(Speed speed=DEFAULT_SPEED);
@@ -85,8 +85,8 @@ public:
 	void		zeroEncoders();
 	void		terminate();
 	void		fineTune();
-	void		driveXaxis(int xFrom, int xTo, int y, StationType st);
-	void		driveYaxis(int yFrom, int yTo, int x, StationType st);
+	void		driveXaxis(int xFrom, int xTo, int y, StationType st, Distance skipuntillast=INT_MAX);
+	void		driveYaxis(int yFrom, int yTo, int x, StationType st, Distance skipuntillast=INT_MAX);
 	BUG_STATE	driveXaxis_BUG(int xFrom, int xTo, int y, StationType st);
 	BUG_STATE	driveYaxis_BUG(int yFrom, int yTo, int x, StationType st);
 	void		changeOrientation(Orientation o);
