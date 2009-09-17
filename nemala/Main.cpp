@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 				nemala.calibrate();
 				system("PAUSE");
 				/* Set the robot to the right orientation */
-				//nemala.firstFineTune();
+				nemala.firstFineTune();
 
 				/* For each two following stations calculate the path and drive\turn the robot accordingly */
 				StationType currSt,  nextSt;
@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
 					currSt = nextSt;
 				}
 				nemala.lastFineTune();
+				nemala.terminate();
 				system("PAUSE");
 				return 0;
 			}
@@ -126,6 +127,7 @@ int main(int argc, char *argv[])
 					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
 				}
 				nemala.lastFineTune();
+				nemala.terminate();
 				return 0;
 			}
 			else if(mode == REGULAR)
@@ -210,9 +212,21 @@ int main(int argc, char *argv[])
 						   cout << "Sonar: " << param << endl;;
 							}
 						   break;
-						   case 72: 
+						case 72: 
 							while(1) {
 						   param = nemala.readSonar(2);
+						   cout << "Sonar: " << param << endl;;
+							}
+						   break;
+					   case 71: 
+							while(1) {
+						   param = nemala.readSonar(1);
+						   cout << "Sonar: " << param << endl;;
+							}
+						   break;
+					   case 73: 
+							while(1) {
+						   param = nemala.readSonar(3);
 						   cout << "Sonar: " << param << endl;;
 							}
 						   break;

@@ -19,6 +19,7 @@
 #define MM_BETWEEN_SONAR_READS_BUG 170
 #define SONAR_NR_OF_FIXES 8
 #define FINAL_DEST_EPSELON 4
+#define BUG_BEFORE_LAST_EPS 20
 
 int getMid(int x, int y, int z) {
 	if (((x <= y) && (y<=z)) || ((x >= y) && (y>=z))) return y;
@@ -547,7 +548,7 @@ BUG_STATE Nemala::driveForwardBug(Distance howlong, Distance right_dist, Distanc
 						howlong=0;
 						front_dist=-1;
 						returnvalue=FREE;
-						actual_left_dist=left_dist;
+						left_dist=actual_left_dist;
 					}
 				}
 			}
@@ -568,7 +569,7 @@ BUG_STATE Nemala::driveForwardBug(Distance howlong, Distance right_dist, Distanc
 						howlong=0;
 						front_dist=-1;
 						returnvalue=FREE;
-						actual_right_dist=right_dist;
+						right_dist=actual_right_dist;
 					}
 				}
 			}
@@ -1717,17 +1718,30 @@ BUG_STATE Nemala::driveXaxis_BUG(int xFrom, int xTo, int y, StationType st)
 		changeOrientation(EAST);
 
 	map->getDistances(xTo, y, curr_o, frontDist, backDist, rightDist, leftDist);
-	frontDist=20;
+
+	if(st != LAST) frontDist=20;
+
 	if(st == LAST)
 	{
 		if(rightDist < leftDist)
-			return driveForwardBug(dist*10,rightDist, -1, frontDist);
+		{
+			driveForward(dist*10,rightDist, -1, frontDist);
+			return FREE;
+		}
 		else
-			return driveForwardBug(dist*10,-1, leftDist, frontDist);
+		{
+			driveForward(dist*10,-1, leftDist, frontDist);
+			return FREE;
+		}
 	}
 	else if(st == BEFORE_LAST)
 	{
-		return driveForwardBug(dist*10,-1, -1, frontDist);
+		BUG_STATE bs = driveForwardBug(dist*10,-1, -1, frontDist);
+		if (bs == FREE) return FREE;
+		else {
+			if (abs(curr_x-xTo) < BUG_BEFORE_LAST_EPS) return FREE;
+			else return BLOCKED;
+		}
 	}
 	else if(st == BEFORE_BEFORE_LAST)
 	{
@@ -1756,26 +1770,36 @@ BUG_STATE Nemala::driveYaxis_BUG(int yFrom, int yTo, int x, StationType st)
 	int dist = abs(yFrom-yTo);
 	int frontDist, rightDist, leftDist, backDist;
 	map->getDistances(x, yTo, curr_o, frontDist, backDist, rightDist, leftDist);
-	frontDist=20;
+	if(st != LAST) frontDist=20;
 	if(yFrom < yTo) 
 		changeOrientation(NORTH);
 	else
 		changeOrientation(SOUTH);
-
 	if(st == LAST)
 	{
 		if(rightDist < leftDist)
-			return driveForwardBug(dist*10,rightDist, -1, frontDist);
+		{
+			driveForward(dist*10,rightDist, -1, frontDist);
+			return FREE;
+		}
 		else
-			return driveForwardBug(dist*10,-1, leftDist, frontDist);
+		{
+			driveForward(dist*10,-1, leftDist, frontDist);
+			return FREE;
+		}
 	}
 	else if(st == BEFORE_LAST)
 	{
-		return driveForwardBug(dist*10,-1, -1, frontDist);
+		BUG_STATE bs = driveForwardBug(dist*10,-1, -1, frontDist);
+		if (bs == FREE) return FREE;
+		else {
+			if (abs(curr_y-yTo) < BUG_BEFORE_LAST_EPS) return FREE;
+			else return BLOCKED;
+		}
 	}
 	else if(st == BEFORE_BEFORE_LAST)
 	{
-		int fixCM = 10*10;
+		int fixCM = 15*10;
 		return driveForwardBug(dist*10 + fixCM,-1,-1,frontDist);
 	}
 	else if(st == FIRST)
