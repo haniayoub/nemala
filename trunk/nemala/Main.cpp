@@ -31,31 +31,46 @@ int main(int argc, char *argv[])
 				/* For each two following stations calculate the path and drive\turn the robot accordingly */
 				StationType currSt,  nextSt;
 				BUG_STATE bs;
+				bool foundobs = false;
 				currSt = nemala.map->getNextStation(currX, currY);
 				cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << currX << "," << currY << ")" << " Type: " << currSt << endl;
 				while( (nextSt = nemala.map->getNextStation(nextX, nextY)) != NOT_STATION)
 				{
 					if(currX == nextX) /* | */
 					{
-						bs = nemala.driveYaxis_BUG(currY, nextY, currX, nextSt);
+						if (!foundobs) {
+							bs = nemala.driveYaxis_BUG(currY, nextY, currX, nextSt);
+						} else {
+							nemala.driveYaxis(currY, nextY, currX, nextSt, 300);
+							bs = FREE;
+						}
 						if(bs == FREE)
 							nemala.map->fillYaxis(currY, nextY,	currX, RED);
-						else 
+						else
 							nemala.map->fillYaxis(currY, nemala.curr_y, currX, RED);
 					}
 					else if(currY == nextY) /* - */
 					{
-						bs = nemala.driveXaxis_BUG(currX, nextX, currY, nextSt);
+						if (!foundobs) {
+							bs = nemala.driveXaxis_BUG(currX, nextX, currY, nextSt);
+						} else {
+							nemala.driveXaxis(currX, nextX, currY, nextSt,300);
+							bs = FREE;
+						}
 						if(bs == FREE)
 							nemala.map->fillXaxis(currX, nextX, currY, RED);
 						else
 							nemala.map->fillXaxis(currX, nemala.curr_x, currY, RED);
 					}
 					else
+					{
+						cout << "Exception: Koo3";
 						throw "Exception: Koo3";
+					}
 
 					if(bs == BLOCKED)
 					{	
+						foundobs = true;
 						OBS_POS op = nemala.bypass();
 						currX = nemala.curr_x;
 						currY = nemala.curr_y;
@@ -69,7 +84,10 @@ int main(int argc, char *argv[])
 							if(nemala.map->updatePath(currX, currY))
 								continue;
 							else
+							{
+								cout << "Could not update path!";
 								throw "Could not update path!";
+							}
 						}
 					}
 					cout << "Station " << nemala.map->getCurrStation() << ": " << "(" << nextX << "," << nextY << ")" << " Type: " << nextSt << endl;
@@ -285,11 +303,12 @@ int main(int argc, char *argv[])
 							
 
 							// test for the byPass (bug)
-							nemala.calibrate();
-							system("PAUSE");
-							OBS_POS p = nemala.leftByPass();
-							BUG_STATE state = nemala.secondByPass(p);
-							system("PAUSE");
+							//nemala.calibrate();
+							//system("PAUSE");
+							//OBS_POS p = nemala.leftByPass();
+							//BUG_STATE state = nemala.secondByPass(p);
+							//system("PAUSE");
+							nemala.driveForward(500);
 							//nemala.firstFineTune();
 							/*
 							if (nemala.driveForwardBug(1100,30,-1,20) == BLOCKED) {
